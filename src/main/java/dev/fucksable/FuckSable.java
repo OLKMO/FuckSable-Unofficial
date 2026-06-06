@@ -22,7 +22,7 @@ import java.util.Set;
 @Mod(FuckSable.MOD_ID)
 public class FuckSable {
     public static final String MOD_ID = "fucksable";
-    public static final String VERSION = "1.3.0";
+    public static final String VERSION = "1.4.0";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
     private static FuckSableConfig config;
@@ -104,6 +104,83 @@ public class FuckSable {
             "Fixes Effortless client crash when interacting with Sable physics structures by skipping particle generation for unloaded chunks (Plot storage area coordinates)",
             true,
             Set.of("effortless", "sable"));
+
+        // === 性能优化 - 普通（安全，无崩溃风险） ===
+
+        FixRegistry.register("spatial-index-query",
+            "Uses section-based spatial index for queryIntersecting instead of linear scan, significantly faster with many SubLevels",
+            true,
+            Set.of("sable"));
+        FixRegistry.register("bbox-object-reuse",
+            "Reuses BoundingBox3d objects in hot paths via ThreadLocal pools to reduce GC pressure from frequent allocations",
+            true,
+            Set.of("sable"));
+        FixRegistry.register("inblock-state-cache",
+            "Caches getInBlockState results when entity position hasn't changed significantly, reduces SubLevel traversal frequency",
+            true,
+            Set.of("sable"));
+        FixRegistry.register("level-accelerator-cache",
+            "Enables LevelAccelerator's Long2ObjectMap chunk cache for better hit rate during collision detection",
+            true,
+            Set.of("sable"));
+        FixRegistry.register("collision-aabb-prefilter",
+            "Uses AABB pre-filter before expensive SAT collision detection, skips SAT for blocks whose AABB doesn't intersect entity bounds",
+            true,
+            Set.of("sable"));
+        FixRegistry.register("collision-skip-air",
+            "Checks isAir() before calling getCollisionShape() in collision detection, avoids expensive VoxelShape computation for air blocks",
+            true,
+            Set.of("sable"));
+        FixRegistry.register("fastutil-sublevel-maps",
+            "Uses fastutil Object2ObjectOpenHashMap instead of java.util.HashMap for subLevelsByUUID, reduces Map.Entry allocation overhead",
+            true,
+            Set.of("sable"));
+        FixRegistry.register("physics-traversal-merge",
+            "Merges multiple SubLevel traversals in physics pipeline tick into fewer passes, reduces iteration count from substeps*4 to substeps*2",
+            true,
+            Set.of("sable"));
+        FixRegistry.register("network-sync-batch",
+            "Optimizes SubLevelTrackingSystem network sync by reusing ArrayList instances and skipping unchanged SubLevels early",
+            true,
+            Set.of("sable"));
+
+        // === 性能优化 - 激进（效果显著但有行为异常风险） ===
+
+        FixRegistry.register("dynamic-collision-substep",
+            "Dynamically reduces collision substeps when server TPS is low (RISK: high-speed entities may pass through blocks)",
+            false,
+            Set.of("sable"));
+        FixRegistry.register("skip-far-entity-collision",
+            "Skips SubLevel collision detection for entities far from any player (RISK: entities may clip through SubLevels when no player is nearby)",
+            false,
+            Set.of("sable"));
+        FixRegistry.register("collision-volume-threshold",
+            "Lowers collision block volume threshold from 500^3 to 200^3, prevents lag from large rotated structures (RISK: large structures may have incomplete collision at edges)",
+            false,
+            Set.of("sable"));
+        FixRegistry.register("dynamic-physics-substep",
+            "Dynamically reduces physics substepsPerTick when TPS is low (RISK: physics precision decreases, may cause instability)",
+            false,
+            Set.of("sable"));
+        FixRegistry.register("reduced-network-sync",
+            "Reduces SubLevel network sync frequency when TPS is low (RISK: clients may see position/rotation desync)",
+            false,
+            Set.of("sable"));
+        FixRegistry.register("skip-noncritical-collision",
+            "Skips SubLevel collision for non-critical entities like items, XP orbs and arrows (RISK: these entities will pass through moving SubLevels)",
+            false,
+            Set.of("sable"));
+
+        // === Create mod 性能优化 ===
+
+        FixRegistry.register("create-kinetic-cache",
+            "Caches stress/capacity calculation results in KineticNetwork, recalculates only when network is dirty instead of every tick",
+            true,
+            Set.of("create"));
+        FixRegistry.register("create-contraption-collision-radius",
+            "Reduces contraption collision entity search inflation to improve performance with large contraptions (RISK: entities far above/below contraptions may not collide properly)",
+            false,
+            Set.of("create"));
 
         // 5. 检测环境条件（前置mod是否加载）
         FixRegistry.checkEnvironment(modId -> {

@@ -50,6 +50,44 @@ Enabled by default, can be disabled individually via config. Fixes that depend o
 | `ctt-concurrent-fix` | Create ThreadedTrains | 修 CTT 和机械动力的并发问题。CTT 把火车 tick 移到工作线程，但只把 `manageEntities` 调度回主线程，`updateContraptionAnchors` 还在工作线程跑 —— 主线程读到不一致状态，`EntitySectionStorage` 里的 AVL 树被搞坏，轻则 NPE，重则整个服务器死循环卡死。/ Fixes concurrency issue between CTT and Create. CTT moves train ticking to worker threads but only schedules `manageEntities` back to main thread — `updateContraptionAnchors` still runs on workers. Main thread reads inconsistent state, corrupts AVL tree in `EntitySectionStorage`, resulting in NPE or entire server locking up in infinite loop. |
 | `effortless-particle-fix` | Effortless, Sable | 修 Effortless 对着 Sable 物理结构操作时客户端崩溃。Sable 射线检测返回 Plot 存储区域的远端坐标，Effortless 用该坐标生成粒子时客户端未加载该区块导致崩溃。修复方式：跳过未加载区块的粒子生成。/ Fixes Effortless client crash when interacting with Sable physics structures. Sable raycasting returns Plot storage area coordinates (distant chunks), Effortless uses these to generate particles but the client hasn't loaded those chunks. Fix: skip particle generation for unloaded chunks. |
 
+### 性能优化 / Performance Optimizations
+
+普通优化默认启用，安全无副作用。激进优化默认禁用，效果显著但可能带来行为异常。
+
+Normal optimizations are enabled by default, safe with no side effects. Aggressive optimizations are disabled by default — significant gains but may cause behavioral anomalies.
+
+#### 普通优化 / Normal Optimizations
+
+| 修复项 / Fix | 描述 / Description |
+|--------------|---------------------|
+| `spatial-index-query` | queryIntersecting 从线性扫描改为基于区块的空间索引查询，O(n)→O(1)。/ Replaces linear scan with section-based spatial index for queryIntersecting, O(n)→O(1). |
+| `bbox-object-reuse` | 热路径 BoundingBox3d 对象通过 ThreadLocal 池复用，减少 GC 压力。/ Reuses BoundingBox3d objects in hot paths via ThreadLocal pools, reducing GC pressure. |
+| `inblock-state-cache` | 缓存实体所在方块状态查询结果，避免每 tick 重复遍历。/ Caches entity in-block state query results, avoiding repeated traversal every tick. |
+| `level-accelerator-cache` | 启用 LevelAccelerator 的 Long2ObjectMap 区块缓存（原版硬编码关闭），提升碰撞检测区块查找命中率。/ Enables LevelAccelerator's Long2ObjectMap chunk cache (hardcoded off in vanilla), improving chunk lookup hit rate during collision detection. |
+| `collision-aabb-prefilter` | SAT 碰撞检测前添加 AABB 预筛，跳过不相交方块的 15 轴 SAT 计算。/ Adds AABB pre-filter before SAT collision detection, skipping 15-axis SAT computation for non-intersecting blocks. |
+| `collision-skip-air` | 碰撞检测中空气方块直接返回空 VoxelShape，避免无意义的碰撞形状计算。/ Returns empty VoxelShape for air blocks in collision detection, avoiding pointless collision shape computation. |
+| `fastutil-sublevel-maps` | SubLevel 内部 HashMap 替换为 fastutil 原始类型 Map，减少 Map.Entry 对象分配。/ Replaces SubLevel internal HashMaps with fastutil primitive maps, reducing Map.Entry allocations. |
+| `physics-traversal-merge` | 物理管线 tick 中多次 SubLevel 遍历合并为单次遍历，减少迭代开销。/ Merges multiple SubLevel traversals in physics tick into a single pass, reducing iteration overhead. |
+| `network-sync-batch` | 网络同步标记优化（原版已有批处理机制，此为补充标记）。/ Network sync marking optimization (vanilla already has batching, this adds supplementary marks). |
+
+#### 激进优化 / Aggressive Optimizations
+
+| 修复项 / Fix | 风险 / Risk | 描述 / Description |
+|--------------|-------------|---------------------|
+| `dynamic-collision-substep` | 高速实体穿模 | 服务器 TPS 低时动态降低碰撞子步数。/ Dynamically reduces collision substeps when server TPS is low. |
+| `skip-far-entity-collision` | 远处实体穿模 | 跳过超出阈值的远距离实体碰撞检测。/ Skips collision detection for entities beyond distance threshold. |
+| `collision-volume-threshold` | 大型结构边缘碰撞失效 | 降低小体积方块的碰撞检测精度。/ Reduces collision detection precision for small-volume blocks. |
+| `dynamic-physics-substep` | 物理精度下降 | TPS 低时动态降低物理模拟子步数。/ Dynamically reduces physics simulation substeps when TPS is low. |
+| `reduced-network-sync` | 客户端位置不同步 | 降低 SubLevel 状态网络同步频率。/ Reduces SubLevel state network sync frequency. |
+| `skip-noncritical-collision` | 掉落物/经验球穿模 | 跳过非关键实体（掉落物等）的碰撞检测。/ Skips collision detection for non-critical entities (dropped items, etc.). |
+
+### Create mod 优化 / Create Mod Optimizations
+
+| 修复项 / Fix | 描述 / Description |
+|--------------|---------------------|
+| `create-kinetic-cache` | 缓存 KineticNetwork 应力计算结果，脏标记机制避免重复计算。/ Caches KineticNetwork stress calculation results with dirty flag to avoid redundant computation. |
+| `create-contraption-collision-radius` | 缩减装置实体碰撞检测半径，减少远距离碰撞计算。/ Reduces contraption entity collision detection radius, reducing far-distance collision computation. |
+
 ---
 
 ## 调试命令 / Debug Commands

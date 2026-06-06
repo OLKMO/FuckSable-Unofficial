@@ -22,7 +22,23 @@
     "NetworkPathManagerMixin",
     "SubLevelEntityGetterGuardMixin",
     "SlimeBearingFixMixin",
-    "PhysicsStaffDragClipFixMixin"
+    "PhysicsStaffDragClipFixMixin",
+    "SubLevelContainerQueryMixin",
+    "BoundingBoxReuseMixin",
+    "EntityInBlockStateCacheMixin",
+    "LevelAcceleratorCacheMixin",
+    "LevelAcceleratorAccessor",
+    "CollisionAABBPreFilterMixin",
+    "CollisionSkipAirMixin",
+    "FastUtilSubLevelMapMixin",
+    "DynamicCollisionMixin",
+    "CollisionVolumeThresholdMixin",
+    "PhysicsPipelineOptimizationMixin",
+    "ReducedNetworkSyncMixin",
+    "SkipFarEntityCollisionMixin",
+    "NetworkSyncBatchMixin",
+    "CreateKineticOptimizationMixin",
+    "CreateContraptionCollisionMixin"
   ],
   "client": [
     "EffortlessParticleFixMixin"
