@@ -20,7 +20,9 @@
     "CarriagePassengerLoadoutMixin",
     "CarriageTravelConcurrentMixin",
     "NetworkPathManagerMixin",
-    "SubLevelEntityGetterGuardMixin"
+    "SubLevelEntityGetterGuardMixin",
+    "SlimeBearingFixMixin",
+    "PhysicsStaffDragClipFixMixin"
   ],
   "injectors": {
     "defaultRequire": 1

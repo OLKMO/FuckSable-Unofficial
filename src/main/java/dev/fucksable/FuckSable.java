@@ -72,6 +72,14 @@ public class FuckSable {
             "Fixes Aeronautics SteamVentBlockEntity crashing dedicated servers due to client-only class references in common code",
             true,
             Set.of("aeronautics"));
+        FixRegistry.register("aeronautics-slime-bearfix",
+            "Fixes slime blocks sticking to bearing structures causing them to separate and clip through blocks",
+            false,
+            Set.of("aeronautics"));
+        FixRegistry.register("physics-staff-drag-clipfix",
+            "Prevents physics structures from clipping through physics blocks when dragged at high speed with the physics staff",
+            true,
+            Set.of("simulated"));
         FixRegistry.register("plot-holder-guard",
             "Prevents server crash when block changes occur in plot chunks without a holder (e.g. bamboo growing near unloaded physics structures)",
             true,
