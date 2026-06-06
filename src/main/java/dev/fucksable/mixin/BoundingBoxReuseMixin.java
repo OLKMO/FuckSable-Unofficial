@@ -9,7 +9,8 @@ import org.spongepowered.asm.mixin.Unique;
  * Optimization: Reuses BoundingBox3d objects in hot paths via ThreadLocal pools.
  * <p>
  * Instead of creating new BoundingBox3d instances in frequently called methods,
- * this mixin provides a ThreadLocal pool that can be used by other mixins and code.
+ * this mixin adds ThreadLocal-cached instances to BoundingBox3d that can be
+ * accessed via the injected getCachedInstance()/getCachedInstance2() methods.
  */
 @Mixin(BoundingBox3d.class)
 public class BoundingBoxReuseMixin {
@@ -20,24 +21,16 @@ public class BoundingBoxReuseMixin {
     @Unique
     private static final ThreadLocal<BoundingBox3d> fucksable$CACHED_BBOX2 = ThreadLocal.withInitial(BoundingBox3d::new);
 
-    /**
-     * Get a ThreadLocal-cached BoundingBox3d instance for temporary use.
-     * Must not be retained beyond the current method call.
-     */
     @Unique
-    public static BoundingBox3d fucksable$getCached() {
+    private static BoundingBox3d fucksable$getCached() {
         if (!FixRegistry.isEnabled("bbox-object-reuse")) {
             return new BoundingBox3d();
         }
         return fucksable$CACHED_BBOX.get();
     }
 
-    /**
-     * Get a second ThreadLocal-cached BoundingBox3d instance for temporary use.
-     * Must not be retained beyond the current method call.
-     */
     @Unique
-    public static BoundingBox3d fucksable$getCached2() {
+    private static BoundingBox3d fucksable$getCached2() {
         if (!FixRegistry.isEnabled("bbox-object-reuse")) {
             return new BoundingBox3d();
         }
