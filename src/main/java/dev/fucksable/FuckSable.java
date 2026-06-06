@@ -22,7 +22,7 @@ import java.util.Set;
 @Mod(FuckSable.MOD_ID)
 public class FuckSable {
     public static final String MOD_ID = "fucksable";
-    public static final String VERSION = "1.1.0";
+    public static final String VERSION = "1.3.0";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
     private static FuckSableConfig config;
@@ -100,6 +100,10 @@ public class FuckSable {
             "Fixes ConcurrentModificationException when CreateThreadedTrains ticks trains on worker threads while main thread modifies passenger data",
             true,
             Set.of("createthreadedtrains"));
+        FixRegistry.register("effortless-particle-fix",
+            "Fixes Effortless client crash when interacting with Sable physics structures by skipping particle generation for unloaded chunks (Plot storage area coordinates)",
+            true,
+            Set.of("effortless", "sable"));
 
         // 5. 检测环境条件（前置mod是否加载）
         FixRegistry.checkEnvironment(modId -> {

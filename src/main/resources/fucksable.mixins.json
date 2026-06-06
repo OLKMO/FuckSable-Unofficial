@@ -24,6 +24,9 @@
     "SlimeBearingFixMixin",
     "PhysicsStaffDragClipFixMixin"
   ],
+  "client": [
+    "EffortlessParticleFixMixin"
+  ],
   "injectors": {
     "defaultRequire": 1
   }
