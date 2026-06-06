@@ -1,3 +1,7 @@
+<div align="center">
+  <img src="https://raw.githubusercontent.com/XSY-HYH/fuck-sable/main/src/main/resources/icon.jpg" alt="FuckSable" width="128" height="128">
+</div>
+
 # FuckSable
 
 > 一个专门修 Sable 的 mod / A mod that fixes Sable
