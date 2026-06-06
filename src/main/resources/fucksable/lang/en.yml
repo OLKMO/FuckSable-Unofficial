@@ -1,0 +1,17 @@
+_version: "1.2"
+
+command:
+  list-header: "FuckSable Fixes:"
+  enabled: "enabled"
+  disabled: "disabled"
+  env-unmet: "env unmet"
+  fix-enabled: "Fix '%s' is now enabled"
+  fix-disabled: "Fix '%s' is now disabled"
+  fix-unknown: "Unknown fix: %s"
+  fix-desc: "Description: %s"
+  fix-status: "%s [%s]"
+  fix-requires: "Required mods: %s"
+  fix-env-blocked: "Cannot toggle fix '%s': required mod(s) not loaded"
+  lang-switched: "Language switched to: %s"
+  lang-not-found: "Language file not found: %s"
+  lang-current: "Current: %s | Available: %s"

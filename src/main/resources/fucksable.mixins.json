@@ -1,0 +1,28 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "dev.fucksable.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+    "SubLevelHoldingChunkMapMixin",
+    "SubLevelHoldingChunkMixin",
+    "SubLevelStorageMixin",
+    "RapierPhysicsPipelineMixin",
+    "SubLevelStorageFileMixin",
+    "EntityTeleportMixin",
+    "LinkedTypewriterBlockMixin",
+    "CommandBlockPlaceMixin",
+    "SteamVentValueBoxTransformMixin",
+    "PlacementHandlerMixin",
+    "ServerChunkCacheBlockChangedMixin",
+    "BlockUpdateMonitorMixin",
+    "LevelSetBlockMonitorMixin",
+    "CarriagePassengerLoadoutMixin",
+    "CarriageTravelConcurrentMixin",
+    "NetworkPathManagerMixin",
+    "SubLevelEntityGetterGuardMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

@@ -1,0 +1,17 @@
+_version: "1.2"
+
+command:
+  list-header: "FuckSable 修复项:"
+  enabled: "已启用"
+  disabled: "已禁用"
+  env-unmet: "环境未满足"
+  fix-enabled: "修复项 '%s' 已启用"
+  fix-disabled: "修复项 '%s' 已禁用"
+  fix-unknown: "未知的修复项: %s"
+  fix-desc: "描述: %s"
+  fix-status: "%s [%s]"
+  fix-requires: "前置模组: %s"
+  fix-env-blocked: "无法切换修复项 '%s': 缺少前置模组"
+  lang-switched: "语言已切换为: %s"
+  lang-not-found: "未找到语言文件: %s"
+  lang-current: "当前: %s | 可用: %s"
