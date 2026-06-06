@@ -57,6 +57,9 @@ dependencies {
     compileOnly files("libs/sable-companion.jar")
     // Create 模组依赖（用于修复 CTT 兼容性）
     compileOnly files("libs/create-1.21.1-6.0.10.jar")
+    // Create Aeronautics / Simulated 依赖（用于 SlimeBearingFix 和 PhysicsStaffDragClipFix）
+    compileOnly files("libs/simulated-neoforge-1.21.1-1.2.1.jar")
+    compileOnly files("libs/create-aeronautics-bundled-1.21.1-1.2.1.jar")
 }
 
 // 配置资源处理

@@ -2,9 +2,9 @@ package dev.fucksable.mixin;
 
 import dev.fucksable.FuckSable;
 import dev.fucksable.fix.FixRegistry;
+import dev.ryanhcode.sable.sublevel.system.SubLevelPhysicsSystem;
 import org.joml.Vector3d;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -22,7 +22,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * 修复方式：在 DragSession.physicsTick 中限制目标位置的变化速率，
  * 防止单帧内目标位置跳变过大导致物理引擎无法正确处理碰撞。
  */
-@Pseudo
 @Mixin(targets = "dev.simulated_team.simulated.content.physics_staff.PhysicsStaffServerHandler$DragSession", remap = false)
 public abstract class PhysicsStaffDragClipFixMixin {
 
@@ -42,7 +41,7 @@ public abstract class PhysicsStaffDragClipFixMixin {
      * 限制目标位置的变化速率。
      */
     @Inject(method = "physicsTick", at = @At(value = "INVOKE", target = "Ldev/ryanhcode/sable/api/physics/constraint/PhysicsConstraintHandle;setMotor(Ldev/ryanhcode/sable/api/physics/constraint/ConstraintJointAxis;DDDZD)V", ordinal = 0, shift = At.Shift.BEFORE), remap = false)
-    private void fucksable$limitGoalDelta(Object physicsSystem, CallbackInfo ci) {
+    private void fucksable$limitGoalDelta(SubLevelPhysicsSystem physicsSystem, CallbackInfo ci) {
         if (!FixRegistry.isEnabled("physics-staff-drag-clipfix")) {
             return;
         }
