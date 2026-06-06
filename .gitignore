@@ -2,6 +2,7 @@
 .gradle/
 build/
 out/
+bin/
 build.log
 
 # Dependencies

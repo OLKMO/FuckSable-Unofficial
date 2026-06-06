@@ -16,7 +16,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  * <p>
  * When enabled, delegates to SubLevelPhysicsSystem.getTicketManager().queryIntersecting()
  * which uses section-based indexing instead of iterating all SubLevels.
- * Falls back to linear scan if physics system is unavailable.
+ * Falls back to linear scan if physics system is unavailable or if tickets are not used for queries.
  */
 @Mixin(SubLevelContainer.class)
 public abstract class SubLevelContainerQueryMixin {
@@ -30,11 +30,15 @@ public abstract class SubLevelContainerQueryMixin {
     private void fucksable$spatialIndexQuery(BoundingBox3dc bounds, CallbackInfoReturnable<Iterable<SubLevel>> cir) {
         if (!fucksable$isSpatialIndexEnabled()) return;
 
-        // Get the physics system for this level and use its ticket manager's spatial index
-        SubLevelPhysicsSystem physicsSystem = SubLevelPhysicsSystem.get(((SubLevelContainer)(Object)this).getLevel());
-        if (physicsSystem != null) {
-            Iterable<SubLevel> result = physicsSystem.getTicketManager().queryIntersecting(bounds);
-            cir.setReturnValue(result);
+        try {
+            SubLevelPhysicsSystem physicsSystem = SubLevelPhysicsSystem.get(((SubLevelContainer)(Object)this).getLevel());
+            if (physicsSystem != null) {
+                Iterable<SubLevel> result = physicsSystem.getTicketManager().queryIntersecting(bounds);
+                cir.setReturnValue(result);
+            }
+        } catch (IllegalStateException e) {
+            // "Cannot query intersecting sub-levels when tickets are not used for queries"
+            // Fall through to original linear scan
         }
     }
 }

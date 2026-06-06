@@ -19,7 +19,6 @@
     "LevelSetBlockMonitorMixin",
     "CarriagePassengerLoadoutMixin",
     "CarriageTravelConcurrentMixin",
-    "NetworkPathManagerMixin",
     "SubLevelEntityGetterGuardMixin",
     "SlimeBearingFixMixin",
     "PhysicsStaffDragClipFixMixin",
