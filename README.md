@@ -262,10 +262,9 @@ It's disabled by default (unless you changed the config). **DON'T enable it**. I
 > ~~"我暂时没想把它开源，但你们大可信任安全性 —— 毕竟 Modrinth 审核过了对吧？"~~
 > ~~"I'm not planning to open-source it for now, but you can trust its security — after all, Modrinth reviewed it, right?"~~
 
-现在开源了。代码自己看，安全性自己判断。
+现在开源了。
 
-Now it's open source. Read the code yourself, judge the security yourself.
-
+Now it's open source. 
 ---
 
 ## 许可证 / License
