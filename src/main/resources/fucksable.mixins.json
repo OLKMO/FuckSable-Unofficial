@@ -25,7 +25,8 @@
     "CarriageTravelConcurrentMixin",
     "SubLevelEntityGetterGuardMixin",
     "SlimeBearingFixMixin",
-    "PhysicsStaffDragClipFixMixin"
+    "PhysicsStaffDragClipFixMixin",
+    "SubLevelVolumeLimitMixin"
   ],
   "client": [
     "EffortlessParticleFixMixin"

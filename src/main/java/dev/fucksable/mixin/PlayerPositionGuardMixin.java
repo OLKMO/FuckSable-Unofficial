@@ -39,9 +39,9 @@ public class PlayerPositionGuardMixin {
         double minZ = border.getMinZ() + 1.0;
         double maxZ = border.getMaxZ() - 1.0;
 
-        // Y 轴边界（Minecraft 世界高度限制）
+        // Y 轴边界（原版高度 + 1000 格富裕空间）
         double minY = self.level().getMinBuildHeight() + 1.0;
-        double maxY = self.level().getMaxBuildHeight() - 1.0;
+        double maxY = self.level().getMaxBuildHeight() + 1000.0;
 
         boolean outOfBounds = false;
         double clampedX = pos.x;

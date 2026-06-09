@@ -22,7 +22,7 @@ import java.util.Set;
 @Mod(FuckSable.MOD_ID)
 public class FuckSable {
     public static final String MOD_ID = "fucksable";
-    public static final String VERSION = "1.6.0";
+    public static final String VERSION = "1.6.1";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
     private static FuckSableConfig config;
@@ -93,6 +93,9 @@ public class FuckSable {
             true, Set.of("sable"), FixEntry.Side.SERVER);
         FixRegistry.register("sublevel-entity-guard",
             "Prevents server freeze when SubLevelInclusiveLevelEntityGetter iterates over abnormally large AABBs caused by corrupted entity section storage",
+            true, Set.of("sable"), FixEntry.Side.SERVER);
+        FixRegistry.register("sublevel-volume-limit",
+            "Limits the maximum block count of a single physics structure to prevent server lag and Rapier native crashes from oversized collision bodies",
             true, Set.of("sable"), FixEntry.Side.SERVER);
         FixRegistry.register("ctt-concurrent-fix",
             "Fixes ConcurrentModificationException when CreateThreadedTrains ticks trains on worker threads while main thread modifies passenger data",
