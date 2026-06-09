@@ -1,6 +1,6 @@
 {
   "required": true,
-  "minVersion": "0.8",
+  "priority": 1500,
   "package": "dev.fucksable.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
@@ -15,29 +15,17 @@
     "SteamVentValueBoxTransformMixin",
     "PlacementHandlerMixin",
     "ServerChunkCacheBlockChangedMixin",
+    "ServerLevelPlotBlockChangeMixin",
+    "PlayerPositionGuardMixin",
+    "LightEngineBoundsGuardMixin",
+    "PhysicsTicketGuardMixin",
     "BlockUpdateMonitorMixin",
     "LevelSetBlockMonitorMixin",
     "CarriagePassengerLoadoutMixin",
     "CarriageTravelConcurrentMixin",
     "SubLevelEntityGetterGuardMixin",
     "SlimeBearingFixMixin",
-    "PhysicsStaffDragClipFixMixin",
-    "SubLevelContainerQueryMixin",
-    "BoundingBoxReuseMixin",
-    "EntityInBlockStateCacheMixin",
-    "LevelAcceleratorCacheMixin",
-    "LevelAcceleratorAccessor",
-    "CollisionAABBPreFilterMixin",
-    "CollisionSkipAirMixin",
-    "FastUtilSubLevelMapMixin",
-    "DynamicCollisionMixin",
-    "CollisionVolumeThresholdMixin",
-    "PhysicsPipelineOptimizationMixin",
-    "ReducedNetworkSyncMixin",
-    "SkipFarEntityCollisionMixin",
-    "NetworkSyncBatchMixin",
-    "CreateKineticOptimizationMixin",
-    "CreateContraptionCollisionMixin"
+    "PhysicsStaffDragClipFixMixin"
   ],
   "client": [
     "EffortlessParticleFixMixin"

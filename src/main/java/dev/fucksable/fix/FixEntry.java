@@ -8,25 +8,39 @@ import java.util.Set;
 /**
  * 单个修复项的注册条目。
  * <p>
- * 每个修复项有唯一ID、描述、默认启用状态、运行时启用状态、环境条件和自定义选项。
- * 描述直接在注册时传入，不依赖翻译包。
- * 环境条件指定了启用该修复项所需的前置mod，若前置mod缺失则全局禁用且无法开启。
+ * 每个修复项有唯一ID、描述、默认启用状态、运行时启用状态、环境条件、端侧和自定义选项。
+ * 端侧指定了修复项在哪个端生效：SERVER（仅服务端）、CLIENT（仅客户端）、BOTH（双端）。
+ * 如果修复项标记为 SERVER，则在客户端不会启用；如果标记为 CLIENT，则在服务端不会启用。
  */
 public class FixEntry {
+
+    /**
+     * 修复项的生效端侧。
+     */
+    public enum Side {
+        /** 仅服务端生效 */
+        SERVER,
+        /** 仅客户端生效 */
+        CLIENT,
+        /** 双端都生效 */
+        BOTH
+    }
 
     private final String id;
     private final String description;
     private final boolean defaultEnabled;
     private final Set<String> requiredMods;
+    private final Side side;
     private boolean environmentMet;
     private boolean enabled;
     private final Map<String, Object> options;
 
-    FixEntry(String id, String description, boolean defaultEnabled, Set<String> requiredMods) {
+    FixEntry(String id, String description, boolean defaultEnabled, Set<String> requiredMods, Side side) {
         this.id = id;
         this.description = description;
         this.defaultEnabled = defaultEnabled;
         this.requiredMods = requiredMods != null ? Set.copyOf(requiredMods) : Set.of();
+        this.side = side != null ? side : Side.BOTH;
         this.environmentMet = true;
         this.enabled = defaultEnabled;
         this.options = new LinkedHashMap<>();
@@ -36,6 +50,7 @@ public class FixEntry {
     public String getDescription() { return description; }
     public boolean isDefaultEnabled() { return defaultEnabled; }
     public Set<String> getRequiredMods() { return requiredMods; }
+    public Side getSide() { return side; }
     public boolean isEnvironmentMet() { return environmentMet; }
 
     /**
@@ -44,12 +59,23 @@ public class FixEntry {
     void setEnvironmentMet(boolean met) { this.environmentMet = met; }
 
     /**
-     * 修复项是否实际启用：需要运行时启用状态为true且环境条件满足。
+     * 修复项是否实际启用：需要运行时启用状态为true、环境条件满足、且端侧匹配。
      */
-    public boolean isEnabled() { return enabled && environmentMet; }
+    public boolean isEnabled() { return enabled && environmentMet && isSideMatch(); }
 
     /**
-     * 运行时启用状态（不考虑环境条件）。
+     * 当前端是否匹配此修复项的端侧。
+     */
+    private boolean isSideMatch() {
+        if (side == Side.BOTH) return true;
+        boolean isClient = net.neoforged.api.distmarker.Dist.CLIENT == net.neoforged.fml.loading.FMLLoader.getDist();
+        if (side == Side.SERVER) return !isClient;
+        if (side == Side.CLIENT) return isClient;
+        return true;
+    }
+
+    /**
+     * 运行时启用状态（不考虑环境条件和端侧）。
      */
     public boolean isExplicitlyEnabled() { return enabled; }
 

@@ -54,40 +54,44 @@ public abstract class EntityTeleportMixin {
 
         Vec3 targetPos = new Vec3(x, y, z);
 
-        // 方法1：使用 Sable 的 projectOutOfSubLevel（通过 getContaining 查找 sub-level）
-        Vec3 projected = Sable.HELPER.projectOutOfSubLevel(level, targetPos);
-        if (!projected.equals(targetPos)) {
-            FuckSable.LOGGER.debug("CarryOn compat: projected teleport via getContaining from ({}, {}, {}) to ({}, {}, {})",
-                x, y, z, projected.x, projected.y, projected.z);
-            self.setPos(projected.x, projected.y, projected.z);
-            ci.cancel();
-            return;
-        }
-
-        // 方法2：遍历所有 sub-level，检查目标坐标是否在 plot 的局部坐标范围内
-        if (!(level instanceof SubLevelContainerHolder holder)) return;
-
-        SubLevelContainer container = holder.sable$getPlotContainer();
-        if (container == null) return;
-
-        List<? extends SubLevel> subLevels = container.getAllSubLevels();
-        for (SubLevel subLevel : subLevels) {
-            LevelPlot plot = subLevel.getPlot();
-            var plotBounds = plot.getBoundingBox();
-
-            // 检查目标坐标是否在 plot 的局部坐标范围内
-            if (x >= plotBounds.minX() - 1 && x <= plotBounds.maxX() + 2 &&
-                y >= plotBounds.minY() - 1 && y <= plotBounds.maxY() + 2 &&
-                z >= plotBounds.minZ() - 1 && z <= plotBounds.maxZ() + 2) {
-
-                // 使用 sub-level 的 pose 将局部坐标投影到全局坐标
-                Vec3 globalPos = JOMLConversion.toMojang(subLevel.logicalPose().transformPosition(JOMLConversion.toJOML(targetPos)));
-                FuckSable.LOGGER.debug("CarryOn compat: projected teleport via plot scan from ({}, {}, {}) to ({}, {}, {})",
-                    x, y, z, globalPos.x, globalPos.y, globalPos.z);
-                self.setPos(globalPos.x, globalPos.y, globalPos.z);
+        try {
+            // 方法1：使用 Sable 的 projectOutOfSubLevel（通过 getContaining 查找 sub-level）
+            Vec3 projected = Sable.HELPER.projectOutOfSubLevel(level, targetPos);
+            if (!projected.equals(targetPos)) {
+                FuckSable.LOGGER.debug("CarryOn compat: projected teleport via getContaining from ({}, {}, {}) to ({}, {}, {})",
+                    x, y, z, projected.x, projected.y, projected.z);
+                self.setPos(projected.x, projected.y, projected.z);
                 ci.cancel();
                 return;
             }
+
+            // 方法2：遍历所有 sub-level，检查目标坐标是否在 plot 的局部坐标范围内
+            if (!(level instanceof SubLevelContainerHolder holder)) return;
+
+            SubLevelContainer container = holder.sable$getPlotContainer();
+            if (container == null) return;
+
+            List<? extends SubLevel> subLevels = container.getAllSubLevels();
+            for (SubLevel subLevel : subLevels) {
+                LevelPlot plot = subLevel.getPlot();
+                var plotBounds = plot.getBoundingBox();
+
+                // 检查目标坐标是否在 plot 的局部坐标范围内
+                if (x >= plotBounds.minX() - 1 && x <= plotBounds.maxX() + 2 &&
+                    y >= plotBounds.minY() - 1 && y <= plotBounds.maxY() + 2 &&
+                    z >= plotBounds.minZ() - 1 && z <= plotBounds.maxZ() + 2) {
+
+                    // 使用 sub-level 的 pose 将局部坐标投影到全局坐标
+                    Vec3 globalPos = JOMLConversion.toMojang(subLevel.logicalPose().transformPosition(JOMLConversion.toJOML(targetPos)));
+                    FuckSable.LOGGER.debug("CarryOn compat: projected teleport via plot scan from ({}, {}, {}) to ({}, {}, {})",
+                        x, y, z, globalPos.x, globalPos.y, globalPos.z);
+                    self.setPos(globalPos.x, globalPos.y, globalPos.z);
+                    ci.cancel();
+                    return;
+                }
+            }
+        } catch (Exception e) {
+            FuckSable.LOGGER.error("CarryOn compat: error projecting teleport position, using original", e);
         }
     }
 }

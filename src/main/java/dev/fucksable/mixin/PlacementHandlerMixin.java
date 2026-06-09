@@ -48,40 +48,44 @@ public class PlacementHandlerMixin {
     private static Vec3 fucksable$projectPlacementPos(Vec3 placementPos, ServerPlayer player) {
         if (!FixRegistry.isEnabled("carryon-compat")) return placementPos;
 
-        var level = player.serverLevel();
+        try {
+            var level = player.serverLevel();
 
-        // 方法1：使用 Sable 的 projectOutOfSubLevel
-        Vec3 projected = Sable.HELPER.projectOutOfSubLevel(level, placementPos);
-        if (!projected.equals(placementPos)) {
-            FuckSable.LOGGER.info("CarryOn compat: projected placement pos via getContaining from ({}, {}, {}) to ({}, {}, {})",
-                placementPos.x, placementPos.y, placementPos.z, projected.x, projected.y, projected.z);
-            return projected;
-        }
-
-        // 方法2：遍历所有 sub-level，检查目标坐标是否在 plot 的局部坐标范围内
-        if (!(level instanceof SubLevelContainerHolder holder)) return placementPos;
-
-        SubLevelContainer container = holder.sable$getPlotContainer();
-        if (container == null) return placementPos;
-
-        List<? extends SubLevel> subLevels = container.getAllSubLevels();
-        for (SubLevel subLevel : subLevels) {
-            LevelPlot plot = subLevel.getPlot();
-            var plotBounds = plot.getBoundingBox();
-
-            double x = placementPos.x;
-            double y = placementPos.y;
-            double z = placementPos.z;
-
-            if (x >= plotBounds.minX() - 1 && x <= plotBounds.maxX() + 2 &&
-                y >= plotBounds.minY() - 1 && y <= plotBounds.maxY() + 2 &&
-                z >= plotBounds.minZ() - 1 && z <= plotBounds.maxZ() + 2) {
-
-                Vec3 globalPos = JOMLConversion.toMojang(subLevel.logicalPose().transformPosition(JOMLConversion.toJOML(placementPos)));
-                FuckSable.LOGGER.info("CarryOn compat: projected placement pos via plot scan from ({}, {}, {}) to ({}, {}, {})",
-                    x, y, z, globalPos.x, globalPos.y, globalPos.z);
-                return globalPos;
+            // 方法1：使用 Sable 的 projectOutOfSubLevel
+            Vec3 projected = Sable.HELPER.projectOutOfSubLevel(level, placementPos);
+            if (!projected.equals(placementPos)) {
+                FuckSable.LOGGER.info("CarryOn compat: projected placement pos via getContaining from ({}, {}, {}) to ({}, {}, {})",
+                    placementPos.x, placementPos.y, placementPos.z, projected.x, projected.y, projected.z);
+                return projected;
             }
+
+            // 方法2：遍历所有 sub-level，检查目标坐标是否在 plot 的局部坐标范围内
+            if (!(level instanceof SubLevelContainerHolder holder)) return placementPos;
+
+            SubLevelContainer container = holder.sable$getPlotContainer();
+            if (container == null) return placementPos;
+
+            List<? extends SubLevel> subLevels = container.getAllSubLevels();
+            for (SubLevel subLevel : subLevels) {
+                LevelPlot plot = subLevel.getPlot();
+                var plotBounds = plot.getBoundingBox();
+
+                double x = placementPos.x;
+                double y = placementPos.y;
+                double z = placementPos.z;
+
+                if (x >= plotBounds.minX() - 1 && x <= plotBounds.maxX() + 2 &&
+                    y >= plotBounds.minY() - 1 && y <= plotBounds.maxY() + 2 &&
+                    z >= plotBounds.minZ() - 1 && z <= plotBounds.maxZ() + 2) {
+
+                    Vec3 globalPos = JOMLConversion.toMojang(subLevel.logicalPose().transformPosition(JOMLConversion.toJOML(placementPos)));
+                    FuckSable.LOGGER.info("CarryOn compat: projected placement pos via plot scan from ({}, {}, {}) to ({}, {}, {})",
+                        x, y, z, globalPos.x, globalPos.y, globalPos.z);
+                    return globalPos;
+                }
+            }
+        } catch (Exception e) {
+            FuckSable.LOGGER.error("CarryOn compat: error projecting placement position, using original", e);
         }
 
         return placementPos;

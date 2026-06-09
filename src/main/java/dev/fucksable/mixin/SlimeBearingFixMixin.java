@@ -15,7 +15,8 @@ import org.spongepowered.asm.mixin.injection.Redirect;
  * 拉入同一个结构。这导致旋转轴承的子结构被粘液球"粘连"进主结构，
  * 旋转时产生人为的分离和穿模效应。
  * <p>
- * 修复方式：拦截 SimAssemblyService.canStickTo，当其中一方是旋转轴承时返回 false。
+ * 修复方式：在 SimAssemblyContraption.moveBlock 中拦截 SimAssemblyService.canStickTo 调用，
+ * 当其中一方是旋转轴承时返回 false。
  * <p>
  * 默认关闭，因为很多玩法基于这个 bug。
  */
@@ -23,10 +24,14 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 public abstract class SlimeBearingFixMixin {
 
     /**
-     * 拦截第一个 canStickTo 调用，当其中一方是旋转轴承时禁止粘连。
+     * 拦截 moveBlock 中所有 canStickTo 调用，当检测到旋转轴承时返回 false。
      */
-    @Redirect(method = "moveBlock", at = @At(value = "INVOKE", target = "Ldev/simulated_team/simulated/service/SimAssemblyService;canStickTo(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/state/BlockState;)Z", ordinal = 0), remap = false)
-    private static boolean fucksable$preventSlimeStickToBearing0(SimAssemblyService instance, BlockState stateA, BlockState stateB) {
+    @Redirect(
+        method = "moveBlock",
+        at = @At(value = "INVOKE", target = "Ldev/simulated_team/simulated/service/SimAssemblyService;canStickTo(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/state/BlockState;)Z"),
+        remap = false
+    )
+    private boolean fucksable$preventSlimeStickToBearing(SimAssemblyService instance, BlockState stateA, BlockState stateB) {
         boolean original = instance.canStickTo(stateA, stateB);
 
         if (!FixRegistry.isEnabled("aeronautics-slime-bearfix")) {
@@ -39,28 +44,6 @@ public abstract class SlimeBearingFixMixin {
 
         if (isSwivelBearing(stateA) || isSwivelBearing(stateB)) {
             FuckSable.LOGGER.debug("Slime-bearing fix: preventing stick between {} and {}", stateA, stateB);
-            return false;
-        }
-
-        return true;
-    }
-
-    /**
-     * 拦截第二个 canStickTo 调用（反向检查）。
-     */
-    @Redirect(method = "moveBlock", at = @At(value = "INVOKE", target = "Ldev/simulated_team/simulated/service/SimAssemblyService;canStickTo(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/state/BlockState;)Z", ordinal = 1), remap = false)
-    private static boolean fucksable$preventSlimeStickToBearing1(SimAssemblyService instance, BlockState stateA, BlockState stateB) {
-        boolean original = instance.canStickTo(stateA, stateB);
-
-        if (!FixRegistry.isEnabled("aeronautics-slime-bearfix")) {
-            return original;
-        }
-
-        if (!original) {
-            return false;
-        }
-
-        if (isSwivelBearing(stateA) || isSwivelBearing(stateB)) {
             return false;
         }
 
