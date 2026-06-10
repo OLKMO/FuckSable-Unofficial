@@ -30,10 +30,10 @@ public class SubLevelVolumeLimitMixin {
 
     /**
      * 默认最大方块数量限制。
-     * 2048 个方块是一个相对安全的上限，大约相当于 16x16x8 的体积。
-     * 这个值足够大，不会影响正常游戏体验，但能有效防止极端情况。
+     * 8192 个方块，大约相当于 16x16x32 的体积。
+     * 留出足够空间支持普通玩家建造，同时防止极端过大的物理结构触发 Rapier 原生崩溃。
      */
-    private static final int FUCKSABLE$MAX_BLOCK_COUNT = 2048;
+    private static final int FUCKSABLE$MAX_BLOCK_COUNT = 8192; // 16*16*16 = 4096, doubled for headroom
 
     @Inject(method = "assembleBlocks", at = @At("HEAD"), cancellable = true, remap = false)
     private static void fucksable$checkVolumeLimit(ServerLevel level, BlockPos anchor,

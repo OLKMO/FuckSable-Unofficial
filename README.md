@@ -38,7 +38,7 @@ Enabled by default, can be disabled individually via config. Fixes that depend o
 | `player-position-guard` | 玩家坐标超出世界边界时自动拉回，防止 SubLevel 物理把玩家扔出世界导致崩溃。Y 轴上限扩展至原版 +1000 格。/ Clamps player position to world border when coordinates exceed boundaries, preventing server crashes from SubLevel physics. Y-axis limit extended to vanilla +1000. |
 | `light-engine-bounds-guard` | 防止 SubLevel 区段超出世界高度限制时光照引擎崩溃。/ Prevents light engine crashes when SubLevel sections exceed world height limits during light propagation. |
 | `physics-ticket-guard` | 防止 PhysicsChunkTicketManager 导致 DistanceManager 内部状态损坏（ArrayIndexOutOfBoundsException）。/ Prevents server crash when PhysicsChunkTicketManager triggers DistanceManager internal state corruption. |
-| `sublevel-volume-limit` | 限制单个物理结构最大方块数量（2048），防止过大的碰撞体导致 Rapier 原生崩溃。/ Limits maximum block count of a single physics structure (2048), preventing Rapier native crashes from oversized collision bodies. |
+| `sublevel-volume-limit` | 限制单个物理结构最大方块数量（8192，约 16x16x32 体积），防止过大的碰撞体导致 Rapier 原生崩溃。/ Limits maximum block count of a single physics structure (8192, approx 16x16x32), preventing Rapier native crashes from oversized collision bodies. |
 
 ### 兼容性修复 / Compatibility Fixes
 
@@ -100,6 +100,8 @@ Normal optimizations are enabled by default, safe with no side effects. Aggressi
 |----------------|----------------|
 | `/fucksable` | 查看所有修复项状态 / View status of all fixes |
 | `/fucksable <修复项/fix> on/off` | 启用/禁用某个修复项 / Enable/disable a fix |
+| `/fucksable all on/off` | 启用/禁用全部修复项 / Enable/disable all fixes |
+| `/fucksable default` | 恢复所有修复项为默认配置 / Reset all fixes to defaults |
 | `/fucksable fstemp <方块ID/block ID>` | 遍历已加载区块查找指定方块（包含物理结构上的）—— 其实没啥用，你看命令名也猜得到吧？/ Scan loaded chunks for a specific block (includes blocks on physics structures) — pretty useless, you can tell from the command name, right? |
 | `/fucksable fs2temp on <坐标/coords>` | 监控指定位置的方块更新，显示完整调用链（点击可复制）—— 和上面那个一样，临时的，没啥大用 / Monitor block updates at a location, show full call chain (click to copy) — same as above, temporary, not very useful |
 | `/fucksable fs2temp off` | 停止监控 / Stop monitoring |

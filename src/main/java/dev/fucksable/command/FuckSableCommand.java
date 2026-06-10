@@ -32,6 +32,9 @@ public class FuckSableCommand {
             .then(Commands.argument("fix", StringArgumentType.word())
                 .suggests((context, builder) -> {
                     String input = builder.getRemaining().toLowerCase();
+                    if ("all".startsWith(input)) {
+                        builder.suggest("all");
+                    }
                     for (FixEntry entry : FixRegistry.getAllFixes()) {
                         if (entry.getId().toLowerCase().startsWith(input)) {
                             builder.suggest(entry.getId());
@@ -44,6 +47,9 @@ public class FuckSableCommand {
                     .executes(ctx -> toggleFix(ctx, true)))
                 .then(Commands.literal("off")
                     .executes(ctx -> toggleFix(ctx, false)))
+            )
+            .then(Commands.literal("default")
+                .executes(FuckSableCommand::resetToDefaults)
             )
             .then(Commands.literal("fstemp")
                 .then(Commands.argument("block", StringArgumentType.word())
@@ -113,6 +119,11 @@ public class FuckSableCommand {
 
     private static int toggleFix(CommandContext<CommandSourceStack> context, boolean enabled) {
         String fixId = StringArgumentType.getString(context, "fix");
+
+        if (fixId.equalsIgnoreCase("all")) {
+            return toggleAllFixes(context, enabled);
+        }
+
         FixEntry entry = FixRegistry.getFix(fixId);
 
         if (entry == null) {
@@ -130,6 +141,34 @@ public class FuckSableCommand {
         String key = enabled ? "command.fix-enabled" : "command.fix-disabled";
         context.getSource().sendSuccess(() -> Component.literal(LanguageManager.get(key, fixId)), true);
         return 1;
+    }
+
+    private static int toggleAllFixes(CommandContext<CommandSourceStack> context, boolean enabled) {
+        int changed = 0;
+        for (FixEntry entry : FixRegistry.getAllFixes()) {
+            if (!entry.isEnvironmentMet()) continue;
+            entry.setEnabled(enabled);
+            changed++;
+        }
+        FuckSable.saveConfig();
+        final int count = changed;
+        String key = enabled ? "command.all-enabled" : "command.all-disabled";
+        context.getSource().sendSuccess(() -> Component.literal(LanguageManager.get(key, count)), true);
+        return changed;
+    }
+
+    private static int resetToDefaults(CommandContext<CommandSourceStack> context) {
+        int changed = 0;
+        for (FixEntry entry : FixRegistry.getAllFixes()) {
+            if (entry.isExplicitlyEnabled() != entry.isDefaultEnabled()) {
+                entry.setEnabled(entry.isDefaultEnabled());
+                changed++;
+            }
+        }
+        FuckSable.saveConfig();
+        final int count = changed;
+        context.getSource().sendSuccess(() -> Component.literal(LanguageManager.get("command.reset-defaults", count)), true);
+        return changed;
     }
 
     private static int findBlocks(CommandContext<CommandSourceStack> context) {
