@@ -25,11 +25,7 @@ public abstract class RapierPhysicsPipelineMixin {
 
     @Shadow(remap = false)
     @Final
-    private int sceneId;
-
-    @Shadow(remap = false)
-    @Final
-    private double[] cache;
+    private double[] poseCache;
 
     @Shadow(remap = false)
     @Final

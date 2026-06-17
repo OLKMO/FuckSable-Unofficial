@@ -22,7 +22,7 @@ import java.util.Set;
 @Mod(FuckSable.MOD_ID)
 public class FuckSable {
     public static final String MOD_ID = "fucksable";
-    public static final String VERSION = "1.6.2";
+    public static final String VERSION = "1.6.3";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
     private static FuckSableConfig config;
@@ -30,6 +30,10 @@ public class FuckSable {
 
     public FuckSable(IEventBus bus, ModContainer container) {
         modContainer = container;
+
+        // 0. 启动动画
+        ConsoleAnsiArtist.printAnsiText("F--K SABLE", "255,80,80", "");
+        System.out.println();
 
         // 1. 初始化i18n
         Path configDir = FMLPaths.CONFIGDIR.get();
@@ -123,7 +127,7 @@ public class FuckSable {
             }
         }
 
-        // 7. 自动更新检查（默认关闭，需在配置中启用）
+        // 7. 自动更新检查
         if (config.isAutoUpdate()) {
             UpdateChecker.checkAsync();
         }
