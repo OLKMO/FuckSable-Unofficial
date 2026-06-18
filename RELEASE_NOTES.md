@@ -1,3 +1,13 @@
+## v1.6.4
+
+### Bug Fixes
+- Fix `ParticleEngine.crack()` method signature mismatch causing client crash (fixes #1)
+- Fix `RapierPhysicsPipelineMixin` crash: `sceneId` field removed, `cache` renamed to `poseCache` in Sable 2.0.2+ (fixes #2)
+- Update `SteamVentValueBoxTransformMixin` to also cover `fromSide` method for Aeronautics compat (fixes #3)
+
+### Changes
+- Change 18 fix entries from `Side.SERVER` to `Side.BOTH` so fixes also work in singleplayer (integrated server)
+
 ## v1.6.3
 
 ### Bug Fixes
