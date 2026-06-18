@@ -6,7 +6,6 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.particle.ParticleEngine;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.phys.BlockHitResult;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -53,9 +52,11 @@ public abstract class EffortlessParticleFixMixin {
 
     /**
      * 拦截 crack 方法，检查区块是否已加载。
+     * 新版 MC 中 crack 签名为 (BlockPos, Direction)，旧版为 (BlockHitResult)。
+     * 使用宽松参数匹配以兼容不同版本。
      */
     @Inject(method = "crack", at = @At("HEAD"), cancellable = true)
-    private void fucksable$checkChunkLoadedCrack(BlockHitResult hitResult, CallbackInfo ci) {
+    private void fucksable$checkChunkLoadedCrack(BlockPos pos, net.minecraft.core.Direction direction, CallbackInfo ci) {
         if (!FixRegistry.isEnabled("effortless-particle-fix")) {
             return;
         }
@@ -64,7 +65,6 @@ public abstract class EffortlessParticleFixMixin {
             return;
         }
 
-        BlockPos pos = hitResult.getBlockPos();
         if (!this.level.hasChunkAt(pos)) {
             FuckSable.LOGGER.debug("Effortless particle fix: skipping crack particle at {} (chunk not loaded)", pos);
             ci.cancel();

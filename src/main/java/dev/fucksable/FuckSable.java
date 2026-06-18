@@ -22,7 +22,7 @@ import java.util.Set;
 @Mod(FuckSable.MOD_ID)
 public class FuckSable {
     public static final String MOD_ID = "fucksable";
-    public static final String VERSION = "1.6.3";
+    public static final String VERSION = "1.6.4";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
     private static FuckSableConfig config;
@@ -47,63 +47,63 @@ public class FuckSable {
 
         // 4. 注册内置修复项
 
-        // === 核心修复（服务端） ===
+        // === 核心修复 ===
         FixRegistry.register("async-save",
             "Redirects SubLevel save operations to an async I/O thread to prevent server freezes during saves",
-            true, FixEntry.Side.SERVER);
+            true, FixEntry.Side.BOTH);
         FixRegistry.register("panic-guard",
             "Adds safety checks before Rust native calls to prevent server crashes from panics in native code",
-            true, FixEntry.Side.SERVER);
+            true, FixEntry.Side.BOTH);
         FixRegistry.register("write-flush",
             "Ensures data is flushed to disk before updating storage file headers, preventing data corruption on crash",
-            true, FixEntry.Side.SERVER);
+            true, FixEntry.Side.BOTH);
         FixRegistry.register("corrupted-cleanup",
             "Removes corrupted sub-level pointers from holding chunks to prevent repeated load errors",
-            true, FixEntry.Side.SERVER);
+            true, FixEntry.Side.BOTH);
 
         // === 兼容性修复 ===
         FixRegistry.register("carryon-compat",
             "Fixes CarryOn placing players on physics sub-levels causing teleportation to wrong dimensions",
-            true, Set.of("carryon"), FixEntry.Side.SERVER);
+            true, Set.of("carryon"), FixEntry.Side.BOTH);
         FixRegistry.register("typewriter-server-fix",
             "Fixes Simulated mod typewriter crashing dedicated servers due to client-only class references in common code",
-            true, Set.of("simulated"), FixEntry.Side.SERVER);
+            true, Set.of("simulated"), FixEntry.Side.BOTH);
         FixRegistry.register("command-block-sublevel-fix",
             "Prevents command blocks (and variants) from being placed on physics sub-levels, which bypasses vanilla restrictions",
-            true, Set.of("sable"), FixEntry.Side.SERVER);
+            true, Set.of("sable"), FixEntry.Side.BOTH);
         FixRegistry.register("aeronautics-server-fix",
             "Fixes Aeronautics SteamVentBlockEntity crashing dedicated servers due to client-only class references in common code",
-            true, Set.of("aeronautics"), FixEntry.Side.SERVER);
+            true, Set.of("aeronautics"), FixEntry.Side.BOTH);
         FixRegistry.register("aeronautics-slime-bearfix",
             "Fixes slime blocks sticking to bearing structures causing them to separate and clip through blocks",
-            false, Set.of("aeronautics"), FixEntry.Side.SERVER);
+            false, Set.of("aeronautics"), FixEntry.Side.BOTH);
         FixRegistry.register("physics-staff-drag-clipfix",
             "Prevents physics structures from clipping through physics blocks when dragged at high speed with the physics staff",
-            true, Set.of("simulated"), FixEntry.Side.SERVER);
+            true, Set.of("simulated"), FixEntry.Side.BOTH);
         FixRegistry.register("plot-holder-guard",
             "Prevents server crash when block changes occur in plot chunks without a holder (e.g. bamboo growing near unloaded physics structures)",
-            true, Set.of("sable"), FixEntry.Side.SERVER);
+            true, Set.of("sable"), FixEntry.Side.BOTH);
         FixRegistry.register("copycats-lift-compat",
             "Prevents server crash when Copycats blocks with missing facing property trigger sable$getNormal in onBlockChange",
-            true, Set.of("sable", "copycats"), FixEntry.Side.SERVER);
+            true, Set.of("sable", "copycats"), FixEntry.Side.BOTH);
         FixRegistry.register("player-position-guard",
             "Clamps player position to world border when coordinates exceed boundaries, preventing server crashes from SubLevel physics",
-            true, Set.of("sable"), FixEntry.Side.SERVER);
+            true, Set.of("sable"), FixEntry.Side.BOTH);
         FixRegistry.register("light-engine-bounds-guard",
             "Prevents light engine crashes when SubLevel sections exceed world height limits during light propagation",
-            true, Set.of("sable"), FixEntry.Side.SERVER);
+            true, Set.of("sable"), FixEntry.Side.BOTH);
         FixRegistry.register("physics-ticket-guard",
             "Prevents server crash when PhysicsChunkTicketManager triggers DistanceManager internal state corruption (ArrayIndexOutOfBoundsException in LeveledPriorityQueue)",
-            true, Set.of("sable"), FixEntry.Side.SERVER);
+            true, Set.of("sable"), FixEntry.Side.BOTH);
         FixRegistry.register("sublevel-entity-guard",
             "Prevents server freeze when SubLevelInclusiveLevelEntityGetter iterates over abnormally large AABBs caused by corrupted entity section storage",
-            true, Set.of("sable"), FixEntry.Side.SERVER);
+            true, Set.of("sable"), FixEntry.Side.BOTH);
         FixRegistry.register("sublevel-volume-limit",
             "Limits the maximum block count of a single physics structure to prevent server lag and Rapier native crashes from oversized collision bodies",
-            true, Set.of("sable"), FixEntry.Side.SERVER);
+            true, Set.of("sable"), FixEntry.Side.BOTH);
         FixRegistry.register("ctt-concurrent-fix",
             "Fixes ConcurrentModificationException when CreateThreadedTrains ticks trains on worker threads while main thread modifies passenger data",
-            true, Set.of("createthreadedtrains"), FixEntry.Side.SERVER);
+            true, Set.of("createthreadedtrains"), FixEntry.Side.BOTH);
 
         // === 客户端修复 ===
         FixRegistry.register("effortless-particle-fix",
