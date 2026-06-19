@@ -32,7 +32,7 @@ public class FuckSable {
         modContainer = container;
 
         // 0. 启动动画
-        ConsoleAnsiArtist.printAnsiText("F--K SABLE", "255,80,80", "");
+        ConsoleAnsiArtist.printAnsiText("FUCK SABLE", "255,80,80", "");
         System.out.println();
 
         // 1. 初始化i18n

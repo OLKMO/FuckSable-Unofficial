@@ -26,3 +26,6 @@ Thumbs.db
 # Minecraft
 run/
 logs/
+build-ver.ps1
+error.log
+META-INF/
