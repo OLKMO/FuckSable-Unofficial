@@ -1,16 +1,21 @@
-## v1.6.7
+# Changelog
+
+All notable changes to FuckSable will be documented in this file.
+
+## [1.6.7] - 2026-06-19
 
 ### Bug Fixes
 - Fix CTT log spam fix mixin crash: correct `Logger.warn` target signature from `(String, Object)` to `(String, Throwable)`
 - Fix `RapierPhysicsPipelineMixin` crash: remove unused `poseCache` `@Shadow` field that doesn't exist on some Sable versions
 - Fix startup animation character misalignment
 
-## v1.6.6
+## [1.6.6] - 2026-06-18
 
 ### Bug Fixes
 - Suppress repeated CTT (CreateThreadedTrains) warning logs when train calculation fails — only logs once per error type
+- Fix physics structures spamming logs when repeatedly out of world bounds — now only warns once per SubLevel
 
-## v1.6.5
+## [1.6.5] - 2026-06-18
 
 ### Bug Fixes
 - Fix physics structures spamming logs when repeatedly out of world bounds — now only warns once per SubLevel, silences subsequent clamps
@@ -18,7 +23,7 @@
 ### Changes
 - Add Discord community link to README
 
-## v1.6.4
+## [1.6.4] - 2026-06-17
 
 ### Bug Fixes
 - Fix `ParticleEngine.crack()` method signature mismatch causing client crash (fixes #1)
@@ -28,14 +33,14 @@
 ### Changes
 - Change 18 fix entries from `Side.SERVER` to `Side.BOTH` so fixes also work in singleplayer (integrated server)
 
-## v1.6.3
+## [1.6.3] - 2026-06-16
 
 ### Bug Fixes
 - Fix crash on Sable 2.0.2+: `@Shadow field sceneId was not located in RapierPhysicsPipeline` (field removed in upstream)
 - Remove fstemp3/fsban/fslook features (conflicted with core functionality)
 - Restore auto-update to config-controlled behavior
 
-## v1.6.0
+## [1.6.0] - 2026-06-14
 
 ### Breaking Changes
 - Remove 16 low-impact performance optimization mixins to reduce compatibility risks
