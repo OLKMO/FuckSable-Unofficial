@@ -23,6 +23,7 @@
     "LevelSetBlockMonitorMixin",
     "CarriagePassengerLoadoutMixin",
     "CarriageTravelConcurrentMixin",
+    "CttLogSpamFixMixin",
     "SubLevelEntityGetterGuardMixin",
     "SlimeBearingFixMixin",
     "PhysicsStaffDragClipFixMixin",

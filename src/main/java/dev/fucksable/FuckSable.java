@@ -22,7 +22,7 @@ import java.util.Set;
 @Mod(FuckSable.MOD_ID)
 public class FuckSable {
     public static final String MOD_ID = "fucksable";
-    public static final String VERSION = "1.6.5";
+    public static final String VERSION = "1.6.6";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
     private static FuckSableConfig config;
@@ -103,6 +103,9 @@ public class FuckSable {
             true, Set.of("sable"), FixEntry.Side.BOTH);
         FixRegistry.register("ctt-concurrent-fix",
             "Fixes ConcurrentModificationException when CreateThreadedTrains ticks trains on worker threads while main thread modifies passenger data",
+            true, Set.of("createthreadedtrains"), FixEntry.Side.BOTH);
+        FixRegistry.register("ctt-log-spam-fix",
+            "Suppresses repeated warning logs from CreateThreadedTrains when train calculation fails, only logs once per error type",
             true, Set.of("createthreadedtrains"), FixEntry.Side.BOTH);
 
         // === 客户端修复 ===

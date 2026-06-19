@@ -1,3 +1,8 @@
+## v1.6.6
+
+### Bug Fixes
+- Suppress repeated CTT (CreateThreadedTrains) warning logs when train calculation fails — only logs once per error type
+
 ## v1.6.5
 
 ### Bug Fixes
