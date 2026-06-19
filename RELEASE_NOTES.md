@@ -1,3 +1,11 @@
+## v1.6.5
+
+### Bug Fixes
+- Fix physics structures spamming logs when repeatedly out of world bounds — now only warns once per SubLevel, silences subsequent clamps
+
+### Changes
+- Add Discord community link to README
+
 ## v1.6.4
 
 ### Bug Fixes

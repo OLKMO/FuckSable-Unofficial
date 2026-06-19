@@ -17,6 +17,10 @@ Sable is a Minecraft mod that adds physics to blocks — a cool concept. But the
 
 - **Sable** — 不是可选，毕竟我存在的意义就是擦它的屁股 / Not optional, after all, my whole reason for existing is to clean up its mess
 
+## 社区 / Community
+
+- [Discord](https://discord.gg/6cZAm2zYNn)
+
 ---
 
 ## 修复项 / Fixes

@@ -13,19 +13,23 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+
 /**
  * 修复物理实体超出世界边界导致无法恢复的问题。
  * <p>
  * 问题分析：
  * Sable 的物理系统可能将 SubLevel 推出世界边界（XZ 平面和 Y 轴），
  * 一旦超出边界，物理实体无法被正常交互或恢复，导致永久丢失。
+ * 此外，持续超出边界会导致每帧重复拉回和日志刷屏。
  * <p>
  * 修复方式：
  * 在 SubLevelPhysicsSystem.updatePose 之后检查 SubLevel 的位置是否超出世界边界，
- * 如果超出则将位置钳制到边界内，防止物理实体丢失。
- * <p>
- * 同时也修复了物理手杖高速拖动导致穿模的问题——通过在 updatePose 中
- * 检查位置变化的幅度，如果单帧位移过大则限制位移距离。
+ * 如果超出则将位置钳制到边界内，清零速度，并记录已超出边界的 SubLevel。
+ * 已记录的 SubLevel 不再重复输出日志，防止刷屏。
+ * 当 SubLevel 回到边界内时，自动从记录中移除。
  */
 @Mixin(SubLevelPhysicsSystem.class)
 public class PhysicsStaffDragClipFixMixin {
@@ -33,9 +37,11 @@ public class PhysicsStaffDragClipFixMixin {
     @Shadow(remap = false)
     private ServerLevel level;
 
+    private static final Set<UUID> CLAMPED_SUBLEVELS = ConcurrentHashMap.newKeySet();
+
     /**
      * 在 updatePose 完成后检查 SubLevel 位置是否超出世界边界。
-     * 如果超出则钳制位置到边界内。
+     * 如果超出则钳制位置到边界内，只输出一次日志警告防止刷屏。
      */
     @Inject(method = "updatePose", at = @At("TAIL"), remap = false)
     private void fucksable$clampSubLevelToWorldBounds(ServerSubLevel serverSubLevel, CallbackInfo ci) {
@@ -65,14 +71,23 @@ public class PhysicsStaffDragClipFixMixin {
         if (clampedY < minY) { clampedY = minY; outOfBounds = true; }
         if (clampedY > maxY) { clampedY = maxY; outOfBounds = true; }
 
+        UUID subLevelId = serverSubLevel.getUniqueId();
+
         if (outOfBounds) {
-            FuckSable.LOGGER.warn("SubLevel {} was out of world bounds at ({}, {}, {}), clamping to ({}, {}, {})",
-                serverSubLevel.getUniqueId(), position.x, position.y, position.z, clampedX, clampedY, clampedZ);
             position.set(clampedX, clampedY, clampedZ);
 
             // 清零速度，防止下一帧继续飞出
             serverSubLevel.latestLinearVelocity.zero();
             serverSubLevel.latestAngularVelocity.zero();
+
+            // 只在首次超出边界时输出日志，防止刷屏
+            if (CLAMPED_SUBLEVELS.add(subLevelId)) {
+                FuckSable.LOGGER.warn("SubLevel {} is out of world bounds, clamping position. Subsequent clamps will be silent.",
+                    subLevelId);
+            }
+        } else {
+            // 回到边界内，移除记录
+            CLAMPED_SUBLEVELS.remove(subLevelId);
         }
     }
 }
