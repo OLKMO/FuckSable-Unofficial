@@ -1,3 +1,8 @@
+## v1.6.7
+
+### Bug Fixes
+- Fix CTT log spam fix mixin crash: correct `Logger.warn` target signature from `(String, Object)` to `(String, Throwable)`
+
 ## v1.6.6
 
 ### Bug Fixes

@@ -27,10 +27,10 @@ public class CttLogSpamFixMixin {
      */
     @Redirect(
         method = "postTick",
-        at = @At(value = "INVOKE", target = "Lorg/slf4j/Logger;warn(Ljava/lang/String;Ljava/lang/Object;)V", remap = false),
+        at = @At(value = "INVOKE", target = "Lorg/slf4j/Logger;warn(Ljava/lang/String;Ljava/lang/Throwable;)V", remap = false),
         remap = false
     )
-    private static void fucksable$suppressRepeatedWarn(Logger instance, String message, Object arg) {
+    private static void fucksable$suppressRepeatedWarn(Logger instance, String message, Throwable arg) {
         if (!FixRegistry.isEnabled("ctt-log-spam-fix")) {
             instance.warn(message, arg);
             return;
