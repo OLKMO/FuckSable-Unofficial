@@ -25,10 +25,6 @@ public abstract class RapierPhysicsPipelineMixin {
 
     @Shadow(remap = false)
     @Final
-    private double[] poseCache;
-
-    @Shadow(remap = false)
-    @Final
     private Int2ObjectMap<ServerSubLevel> activeSubLevels;
 
     @Unique
