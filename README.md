@@ -2,7 +2,7 @@
   <img src="https://raw.githubusercontent.com/XSY-HYH/fuck-sable/main/src/main/resources/icon.jpg" alt="FuckSable" width="128" height="128">
 </div>
 
-# FuckSable
+# F**kSable
 
 > 一个专门修 Sable 的 mod / A mod that fixes Sable
 > 因为 Sable 的作者挖坑不填，我来填 / Because Sable's author left holes, I'm filling them
@@ -20,6 +20,28 @@ Sable is a Minecraft mod that adds physics to blocks — a cool concept. But the
 ## 社区 / Community
 
 - [Discord](https://discord.gg/6cZAm2zYNn)
+
+---
+
+## 版本说明 / Version Notes
+
+当你发现某个版本标记为 **Alpha**（例如 `v1.0.0-alpha.1`），那大概是一个存在已知问题但未被下架的版本。Alpha 版本可能包含未完成的功能、已知的崩溃风险或性能问题，主要用于早期测试和反馈收集。
+
+**但请注意**：Alpha 也包含 Beta 版本 —— 实际上某些 Beta 反而比 Alpha 更稳定。版本号只是个标签，不代表一切。
+
+**详细信息以 [GitHub Releases](https://github.com/XSY-HYH/fuck-sable/releases) 为准** —— 每个版本的发布说明都会清楚列出已知问题、适用范围和建议。不要只看版本号，**看发布说明**。
+
+生产环境请优先选择经过充分测试的版本。如果你在 Alpha/Beta 版本中遇到了问题，欢迎到 [Discord](https://discord.gg/6cZAm2zYNn) 反馈，但请理解——**测试版就是测试版**，崩了别意外。
+
+---
+
+When you see a version marked as **Alpha** (e.g., `v1.0.0-alpha.1`), it's probably a version with known issues that hasn't been taken down yet. Alpha releases may contain incomplete features, known crash risks, or performance problems — they're intended for early testing and feedback collection.
+
+**But note**: Alpha includes Beta releases — in fact, some Betas are actually more stable than certain Alphas. Version numbers are just labels, they don't tell the whole story.
+
+**For detailed information, refer to [GitHub Releases](https://github.com/XSY-HYH/fuck-sable/releases)** — each release's notes clearly list known issues, scope, and recommendations. Don't just look at the version number, **read the release notes**.
+
+For production environments, choose thoroughly tested releases. If you encounter issues in an Alpha/Beta version, feel free to report them on [Discord](https://discord.gg/6cZAm2zYNn), but please understand — **a test version is a test version**, don't be surprised if it breaks.
 
 ---
 
@@ -55,8 +77,8 @@ Enabled by default, can be disabled individually via config. Fixes that depend o
 | `aeronautics-slime-bearfix` | Aeronautics | 修粘液球粘连结构时可以粘连旋转轴承导致其分离并产生穿模效应。**默认关闭** —— 因为很多玩法基于这个 bug。/ Fixes slime blocks sticking to bearing structures causing them to separate and clip through blocks. **Disabled by default** — because many builds rely on this bug. |
 | `physics-staff-drag-clipfix` | Simulated | 修物理手杖高速拖动物理结构时穿模和飞出世界边界。在 `updatePose` 中钳制 SubLevel 位置到世界边界内，超出则清零速度。Y 轴上限扩展至原版 +1000 格。**默认开启**。/ Fixes physics structures clipping through blocks and flying out of world bounds when dragged at high speed. Clamps SubLevel position to world bounds in `updatePose`, zeroes velocity if out of bounds. Y-axis limit extended to vanilla +1000. **Enabled by default**. |
 | `copycats-lift-compat` | Sable, Copycats | 修 Copycats 方块缺少 facing 属性时触发 `sable$getNormal` 导致服务器崩溃。/ Prevents server crash when Copycats blocks with missing facing property trigger `sable$getNormal` in onBlockChange. |
-| `ctt-concurrent-fix` | CreateThreadedTrains | 修 CTT 和机械动力的并发问题。CTT 把火车 tick 移到工作线程，但只把 `manageEntities` 调度回主线程，`updateContraptionAnchors` 还在工作线程跑 —— 主线程读到不一致状态，`EntitySectionStorage` 里的 AVL 树被搞坏，轻则 NPE，重则整个服务器死循环卡死。/ Fixes concurrency issue between CTT and Create. CTT moves train ticking to worker threads but only schedules `manageEntities` back to main thread — `updateContraptionAnchors` still runs on workers. Main thread reads inconsistent state, corrupts AVL tree in `EntitySectionStorage`, resulting in NPE or entire server locking up in infinite loop. |
-| `ctt-log-spam-fix` | CreateThreadedTrains | 抑制 CTT 列车计算失败时的重复 WARN 日志刷屏，每种异常类型只输出一次。/ Suppresses repeated warning logs from CTT when train calculation fails, only logs once per error type. |
+| `ctt-concurrent-fix` | Create ThreadedTrains | 修 CTT 和机械动力的并发问题。CTT 把火车 tick 移到工作线程，但只把 `manageEntities` 调度回主线程，`updateContraptionAnchors` 还在工作线程跑 —— 主线程读到不一致状态，`EntitySectionStorage` 里的 AVL 树被搞坏，轻则 NPE，重则整个服务器死循环卡死。/ Fixes concurrency issue between CTT and Create. CTT moves train ticking to worker threads but only schedules `manageEntities` back to main thread — `updateContraptionAnchors` still runs on workers. Main thread reads inconsistent state, corrupts AVL tree in `EntitySectionStorage`, resulting in NPE or entire server locking up in infinite loop. |
+| `ctt-log-spam-fix` | Create ThreadedTrains | 抑制 CTT 列车计算失败时的重复 WARN 日志刷屏，每种异常类型只输出一次。/ Suppresses repeated warning logs from CTT when train calculation fails, only logs once per error type. |
 | `effortless-particle-fix` | Effortless, Sable | 修 Effortless 对着 Sable 物理结构操作时客户端崩溃。Sable 射线检测返回 Plot 存储区域的远端坐标，Effortless 用该坐标生成粒子时客户端未加载该区块导致崩溃。修复方式：跳过未加载区块的粒子生成。/ Fixes Effortless client crash when interacting with Sable physics structures. Sable raycasting returns Plot storage area coordinates (distant chunks), Effortless uses these to generate particles but the client hasn't loaded those chunks. Fix: skip particle generation for unloaded chunks. |
 | `vista-camera-chunk-fix` | Vista, Sable | 修 Vista 摄像头区块加载与 Sable 物理结构不兼容：ViewFinder 在物理结构上时，其坐标是 SubLevel 内部坐标，Vista 用该坐标在主世界 force-load 区块导致 TPS 掉 0 和无限加载循环。修复方式：force-load 前将坐标投影到主世界坐标。/ Fixes Vista camera chunk loading incompatibility with Sable physics structures: when ViewFinder is on a physics structure, its coordinates are SubLevel-internal, Vista force-loads wrong chunks in the overworld causing TPS drop and infinite loading loops. Fix: project coordinates to world coordinates before force-loading. |
 
@@ -232,6 +254,7 @@ It's disabled by default (unless you changed the config). **DON'T enable it**. I
 现在开源了。
 
 Now it's open source. 
+
 ---
 
 ## 许可证 / License
@@ -239,5 +262,3 @@ Now it's open source.
 MIT License - 详见 [LICENSE](LICENSE) 文件。
 
 MIT License - see [LICENSE](LICENSE) file for details.
-
----

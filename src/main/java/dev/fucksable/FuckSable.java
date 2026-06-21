@@ -22,7 +22,7 @@ import java.util.Set;
 @Mod(FuckSable.MOD_ID)
 public class FuckSable {
     public static final String MOD_ID = "fucksable";
-    public static final String VERSION = "1.6.7";
+    public static final String VERSION = "1.6.8";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
     private static FuckSableConfig config;
@@ -112,6 +112,11 @@ public class FuckSable {
         FixRegistry.register("effortless-particle-fix",
             "Fixes Effortless client crash when interacting with Sable physics structures by skipping particle generation for unloaded chunks (Plot storage area coordinates)",
             true, Set.of("effortless", "sable"), FixEntry.Side.CLIENT);
+
+        // === Vista 兼容修复 ===
+        FixRegistry.register("vista-camera-chunk-fix",
+            "Fixes Vista camera chunk loading incompatibility with Sable physics structures: projects ViewFinder SubLevel coordinates to world coordinates before force-loading chunks, preventing TPS drop and infinite loading loops",
+            true, Set.of("vista", "sable"), FixEntry.Side.BOTH);
 
         // 5. 检测环境条件（前置mod是否加载）
         FixRegistry.checkEnvironment(modId -> {

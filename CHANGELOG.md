@@ -2,6 +2,12 @@
 
 All notable changes to FuckSable will be documented in this file.
 
+## [1.6.8] - 2026-06-19
+
+### Bug Fixes
+- Fix Vista camera chunk loading incompatibility with Sable physics structures: project ViewFinder SubLevel coordinates to world coordinates before force-loading chunks, preventing TPS drop and infinite loading loops
+- Fix `SteamVentValueBoxTransformMixin` crash on Aeronautics 1.3.0+: remove `@Shadow direction` field (removed in upstream), use reflection to set direction field for cross-version compatibility
+
 ## [1.6.7] - 2026-06-19
 
 ### Bug Fixes

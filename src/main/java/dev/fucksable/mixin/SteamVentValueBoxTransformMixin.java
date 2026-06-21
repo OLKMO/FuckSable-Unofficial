@@ -8,7 +8,8 @@ import net.neoforged.api.distmarker.Dist;
 import net.neoforged.fml.loading.FMLEnvironment;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
-import org.spongepowered.asm.mixin.Shadow;
+
+import java.lang.reflect.Field;
 
 /**
  * 修复航空学 SteamVentBlockEntity$SteamVentValueBoxTransform 在专用服务器上
@@ -20,12 +21,35 @@ import org.spongepowered.asm.mixin.Shadow;
  * 修复方式：使用 @Overwrite 覆盖 isSideActive 和 fromSide 方法。
  * 服务端直接返回安全默认值。
  * 客户端通过反射调用 Minecraft.getInstance() 获取鼠标射线检测结果。
+ * <p>
+ * 注意：不使用 @Shadow direction 字段，因为 Create 不同版本中该字段名可能变化，
+ * 改用反射设置方向字段以保证兼容性。
  */
 @Mixin(targets = "dev.eriksonn.aeronautics.content.blocks.hot_air.steam_vent.SteamVentBlockEntity$SteamVentValueBoxTransform", remap = false)
 public abstract class SteamVentValueBoxTransformMixin extends com.simibubi.create.foundation.blockEntity.behaviour.ValueBoxTransform.Sided {
 
-    @Shadow(remap = false)
-    private Direction direction;
+    /**
+     * 通过反射设置父类的方向字段。
+     * Create 不同版本中该字段名可能为 direction 或其他名称，
+     * 遍历父类字段找到 Direction 类型的字段并设置。
+     */
+    private void fucksable$setDirection(Direction dir) {
+        try {
+            Class<?> clazz = this.getClass().getSuperclass();
+            while (clazz != null) {
+                for (Field f : clazz.getDeclaredFields()) {
+                    if (f.getType() == Direction.class) {
+                        f.setAccessible(true);
+                        f.set(this, dir);
+                        return;
+                    }
+                }
+                clazz = clazz.getSuperclass();
+            }
+        } catch (Exception e) {
+            FuckSable.LOGGER.debug("SteamVent: failed to set direction field via reflection", e);
+        }
+    }
 
     /**
      * @author FuckSable
@@ -33,7 +57,7 @@ public abstract class SteamVentValueBoxTransformMixin extends com.simibubi.creat
      */
     @Overwrite(remap = false)
     public com.simibubi.create.foundation.blockEntity.behaviour.ValueBoxTransform.Sided fromSide(final Direction dir) {
-        this.direction = dir;
+        this.fucksable$setDirection(dir);
 
         if (!FixRegistry.isEnabled("aeronautics-server-fix")) {
             return this;
@@ -59,7 +83,7 @@ public abstract class SteamVentValueBoxTransformMixin extends com.simibubi.creat
                     Object hitVec = getLocation.invoke(hitResult);
                     double hx = (double) hitVec.getClass().getMethod("x").invoke(hitVec);
                     double hy = (double) hitVec.getClass().getMethod("y").invoke(hitVec);
-                    double hz = (double) hitVec.getClass().getMethod("z").invoke(hitVec);
+                    double hz = (double) hitVec.getClass().getMethod("z").invoke(hitResult);
 
                     var beField = this.getClass().getDeclaredField("be");
                     beField.setAccessible(true);
@@ -74,7 +98,7 @@ public abstract class SteamVentValueBoxTransformMixin extends com.simibubi.creat
                     if (localY < 0.4) {
                         double localX = hx - (bx + 0.5);
                         double localZ = hz - (bz + 0.5);
-                        this.direction = Direction.getNearest(localX, 0, localZ);
+                        this.fucksable$setDirection(Direction.getNearest(localX, 0, localZ));
                     }
                 }
             } catch (Exception e) {
