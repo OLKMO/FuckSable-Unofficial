@@ -3,6 +3,8 @@ package dev.fucksable.mixin;
 import dev.fucksable.FuckSable;
 import dev.fucksable.fix.FixRegistry;
 import dev.ryanhcode.sable.api.physics.PhysicsPipelineBody;
+import dev.ryanhcode.sable.api.physics.constraint.PhysicsConstraintConfiguration;
+import dev.ryanhcode.sable.api.physics.constraint.PhysicsConstraintHandle;
 import dev.ryanhcode.sable.companion.math.Pose3d;
 import dev.ryanhcode.sable.physics.impl.rapier.Rapier3D;
 import dev.ryanhcode.sable.physics.impl.rapier.RapierPhysicsPipeline;
@@ -20,12 +22,18 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
 @Mixin(RapierPhysicsPipeline.class)
 public abstract class RapierPhysicsPipelineMixin {
 
     @Shadow(remap = false)
     @Final
     private Int2ObjectMap<ServerSubLevel> activeSubLevels;
+
+    @Unique
+    private static final Set<String> fucksable$selfConstraintWarned = ConcurrentHashMap.newKeySet();
 
     @Unique
     private boolean fucksable$isBodyValid(PhysicsPipelineBody body) {
@@ -39,6 +47,21 @@ public abstract class RapierPhysicsPipelineMixin {
     @Unique
     private boolean fucksable$isPanicGuardEnabled() {
         return FixRegistry.isEnabled("panic-guard");
+    }
+
+    // --- Self-constraint suppression ---
+
+    @Inject(method = "addConstraint", at = @At("HEAD"), cancellable = true, remap = false)
+    private void fucksable$suppressSelfConstraint(ServerSubLevel bodyA, ServerSubLevel bodyB, PhysicsConstraintConfiguration<?> configuration, CallbackInfoReturnable<PhysicsConstraintHandle> cir) {
+        if (!FixRegistry.isEnabled("constraint-self-fix")) return;
+
+        if (bodyA == bodyB && bodyA != null) {
+            String key = String.valueOf(Rapier3D.getID(bodyA));
+            if (fucksable$selfConstraintWarned.add(key)) {
+                FuckSable.LOGGER.warn("Suppressed self-constraint on body id={} (same SubLevel), returning null. This warning will not repeat.", key);
+            }
+            cir.setReturnValue(null);
+        }
     }
 
     // --- Velocity queries ---

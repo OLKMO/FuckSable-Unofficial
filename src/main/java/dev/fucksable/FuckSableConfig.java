@@ -51,7 +51,6 @@ public final class FuckSableConfig {
     }
 
     public void save(Path configDir) {
-        if (!existedOnDisk) return;
         Path configPath = configDir.resolve("fucksable").resolve("config.json");
         try {
             Files.createDirectories(configPath.getParent());

@@ -3,6 +3,7 @@ package dev.fucksable.command;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
+import dev.fucksable.FuckSable;
 import dev.fucksable.i18n.LanguageManager;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
@@ -50,6 +51,7 @@ public class FuckSableLangCommand {
         }
 
         LanguageManager.setLanguage(lang);
+        FuckSable.saveConfig();
         context.getSource().sendSuccess(() -> Component.literal(
             LanguageManager.get("command.lang-switched", lang)
         ), true);

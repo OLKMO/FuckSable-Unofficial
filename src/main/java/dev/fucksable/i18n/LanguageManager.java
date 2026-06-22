@@ -87,11 +87,7 @@ public final class LanguageManager {
     }
 
     private static boolean contentMatches(String embedded, String existing) {
-        String embeddedVersion = extractVersion(embedded);
-        String existingVersion = extractVersion(existing);
-        if (embeddedVersion != null && existingVersion != null) {
-            return embeddedVersion.equals(existingVersion);
-        }
+        // 内容完全一致则跳过，否则替换（确保嵌入版本始终覆盖本地）
         return embedded.trim().equals(existing.trim());
     }
 

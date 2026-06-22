@@ -31,10 +31,6 @@ public class FuckSable {
     public FuckSable(IEventBus bus, ModContainer container) {
         modContainer = container;
 
-        // 0. 启动动画
-        ConsoleAnsiArtist.printAnsiText("FUCK SABLE", "255,80,80", "");
-        System.out.println();
-
         // 1. 初始化i18n
         Path configDir = FMLPaths.CONFIGDIR.get();
         LanguageManager.init(configDir);
@@ -44,6 +40,9 @@ public class FuckSable {
 
         // 3. 应用配置中的语言偏好
         LanguageManager.setLanguage(config.getLanguage());
+
+        // 0. 启动动画（在配置加载后，以便判断彩蛋开关）
+        printBanner(configDir);
 
         // 4. 注册内置修复项
 
@@ -118,6 +117,16 @@ public class FuckSable {
             "Fixes Vista camera chunk loading incompatibility with Sable physics structures: projects ViewFinder SubLevel coordinates to world coordinates before force-loading chunks, preventing TPS drop and infinite loading loops",
             true, Set.of("vista", "sable"), FixEntry.Side.BOTH);
 
+        // === 物理引擎修复 ===
+        FixRegistry.register("constraint-self-fix",
+            "Suppresses self-constraint errors in Sable physics pipeline: when a constraint is added between a SubLevel and itself, returns null instead of throwing IllegalArgumentException, preventing log spam",
+            true, Set.of("sable"), FixEntry.Side.BOTH);
+
+        // === 彩蛋 ===
+        FixRegistry.register("fuck-op-player",
+            "Easter egg: replaces the startup banner with 'fuck <random OP player name>' instead of 'FUCK SABLE'",
+            false, null, FixEntry.Side.BOTH, true);
+
         // 5. 检测环境条件（前置mod是否加载）
         FixRegistry.checkEnvironment(modId -> {
             boolean loaded = net.neoforged.fml.loading.FMLLoader.getLoadingModList().getModFileById(modId) != null;
@@ -145,6 +154,45 @@ public class FuckSable {
         NeoForge.EVENT_BUS.addListener(this::onServerStopping);
 
         LOGGER.info("fuck Sable v{} loaded - {} fixes registered", VERSION, FixRegistry.getAllFixes().size());
+    }
+
+    private void printBanner(Path configDir) {
+        // 检查配置中是否启用了彩蛋
+        Boolean fuckOpState = config.getFixStates().get("fuck-op-player");
+        boolean fuckOpEnabled = fuckOpState != null && fuckOpState;
+
+        if (fuckOpEnabled) {
+            // 从 ops.json 读取 OP 玩家名
+            java.util.List<String> opNames = new java.util.ArrayList<>();
+            try {
+                // configDir 是 <server>/config，ops.json 在 <server>/ops.json
+                var opsPath = configDir.getParent().resolve("ops.json");
+                if (java.nio.file.Files.exists(opsPath)) {
+                    var reader = java.nio.file.Files.newBufferedReader(opsPath);
+                    var arr = com.google.gson.JsonParser.parseReader(reader).getAsJsonArray();
+                    reader.close();
+                    for (var elem : arr) {
+                        var obj = elem.getAsJsonObject();
+                        if (obj.has("name")) {
+                            opNames.add(obj.get("name").getAsString());
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                LOGGER.debug("Failed to read ops.json for fuck-op-player easter egg", e);
+            }
+
+            if (!opNames.isEmpty()) {
+                String target = opNames.get(java.util.concurrent.ThreadLocalRandom.current().nextInt(opNames.size()));
+                ConsoleAnsiArtist.printAnsiText("FUCK " + target.toUpperCase(), "255,165,0", "");
+                System.out.println();
+                return;
+            }
+        }
+
+        // 默认横幅
+        ConsoleAnsiArtist.printAnsiText("FUCK SABLE", "255,80,80", "");
+        System.out.println();
     }
 
     private void onRegisterCommands(RegisterCommandsEvent event) {

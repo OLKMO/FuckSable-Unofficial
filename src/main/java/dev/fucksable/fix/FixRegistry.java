@@ -45,15 +45,22 @@ public final class FixRegistry {
      * 注册一个内置修复项，带环境条件和端侧指定。
      */
     public static FixEntry register(String id, String description, boolean defaultEnabled, Set<String> requiredMods, FixEntry.Side side) {
+        return register(id, description, defaultEnabled, requiredMods, side, false);
+    }
+
+    /**
+     * 注册一个内置修复项，带环境条件、端侧指定和隐藏标记。
+     */
+    public static FixEntry register(String id, String description, boolean defaultEnabled, Set<String> requiredMods, FixEntry.Side side, boolean hidden) {
         if (fixes.containsKey(id)) {
             throw new IllegalArgumentException("Fix already registered: " + id);
         }
         if (description == null || description.isBlank()) {
             throw new IllegalStateException("Fix '" + id + "' must have a non-empty description");
         }
-        FixEntry entry = new FixEntry(id, description, defaultEnabled, requiredMods, side);
+        FixEntry entry = new FixEntry(id, description, defaultEnabled, requiredMods, side, hidden);
         fixes.put(id, entry);
-        FuckSable.LOGGER.debug("Registered fix: {} (default: {}, side: {}, requiredMods: {})", id, defaultEnabled, side, requiredMods);
+        FuckSable.LOGGER.debug("Registered fix: {} (default: {}, side: {}, requiredMods: {}, hidden: {})", id, defaultEnabled, side, requiredMods, hidden);
         return entry;
     }
 

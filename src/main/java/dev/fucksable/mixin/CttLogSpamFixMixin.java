@@ -12,10 +12,11 @@ import java.util.concurrent.ConcurrentHashMap;
  * 抑制 CTT (CreateThreadedTrains) 的日志刷屏。
  * <p>
  * 问题：CTT 的 postTick 方法每 tick 都会 poll Future 并 get()，
- * 如果列车计算任务抛出异常（如 NullPointerException），
+ * 如果列车计算任务抛出异常（如 NullPointerException、ConcurrentModificationException），
  * 则每 tick 都会输出一条 WARN 日志，导致日志刷屏。
  * <p>
- * 修复方式：拦截 postTick 中的 LOGGER.warn 调用，对同一异常类型只输出一次日志。
+ * 修复方式：拦截 postTick 中的 LOGGER.warn 调用，
+ * 对同一异常类型只输出一次日志。
  */
 @Mixin(targets = "de.mrjulsen.ctt.CreateThreadedTrains", remap = false)
 public class CttLogSpamFixMixin {
@@ -23,7 +24,7 @@ public class CttLogSpamFixMixin {
     private static final ConcurrentHashMap<String, Boolean> LOGGED_ERRORS = new ConcurrentHashMap<>();
 
     /**
-     * 拦截 postTick 中的 LOGGER.warn 调用，抑制重复日志。
+     * 拦截 postTick 中的 LOGGER.warn(String, Throwable) 调用，抑制重复日志。
      */
     @Redirect(
         method = "postTick",
@@ -36,7 +37,7 @@ public class CttLogSpamFixMixin {
             return;
         }
 
-        String key = arg != null ? arg.getClass().getName() : "unknown";
+        String key = "warn:" + (arg != null ? arg.getClass().getName() : "unknown");
         if (LOGGED_ERRORS.putIfAbsent(key, Boolean.TRUE) == null) {
             instance.warn(message + " (subsequent errors of this type will be suppressed)", arg);
         }

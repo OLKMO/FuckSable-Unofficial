@@ -31,16 +31,22 @@ public class FixEntry {
     private final boolean defaultEnabled;
     private final Set<String> requiredMods;
     private final Side side;
+    private final boolean hidden;
     private boolean environmentMet;
     private boolean enabled;
     private final Map<String, Object> options;
 
     FixEntry(String id, String description, boolean defaultEnabled, Set<String> requiredMods, Side side) {
+        this(id, description, defaultEnabled, requiredMods, side, false);
+    }
+
+    FixEntry(String id, String description, boolean defaultEnabled, Set<String> requiredMods, Side side, boolean hidden) {
         this.id = id;
         this.description = description;
         this.defaultEnabled = defaultEnabled;
         this.requiredMods = requiredMods != null ? Set.copyOf(requiredMods) : Set.of();
         this.side = side != null ? side : Side.BOTH;
+        this.hidden = hidden;
         this.environmentMet = true;
         this.enabled = defaultEnabled;
         this.options = new LinkedHashMap<>();
@@ -51,6 +57,7 @@ public class FixEntry {
     public boolean isDefaultEnabled() { return defaultEnabled; }
     public Set<String> getRequiredMods() { return requiredMods; }
     public Side getSide() { return side; }
+    public boolean isHidden() { return hidden; }
     public boolean isEnvironmentMet() { return environmentMet; }
 
     /**

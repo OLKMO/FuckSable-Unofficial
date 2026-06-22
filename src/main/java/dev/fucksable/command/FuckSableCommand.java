@@ -36,6 +36,7 @@ public class FuckSableCommand {
                         builder.suggest("all");
                     }
                     for (FixEntry entry : FixRegistry.getAllFixes()) {
+                        if (entry.isHidden()) continue;
                         if (entry.getId().toLowerCase().startsWith(input)) {
                             builder.suggest(entry.getId());
                         }
@@ -74,6 +75,7 @@ public class FuckSableCommand {
         source.sendSuccess(() -> Component.literal(LanguageManager.get("command.list-header")), false);
 
         for (FixEntry entry : FixRegistry.getAllFixes()) {
+            if (entry.isHidden()) continue;
             String status;
             if (!entry.isEnvironmentMet()) {
                 status = LanguageManager.get("command.env-unmet");
