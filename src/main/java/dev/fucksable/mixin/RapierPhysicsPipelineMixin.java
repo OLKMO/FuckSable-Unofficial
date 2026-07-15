@@ -50,19 +50,10 @@ public abstract class RapierPhysicsPipelineMixin {
     }
 
     // --- Self-constraint suppression ---
-
-    @Inject(method = "addConstraint", at = @At("HEAD"), cancellable = true, remap = false)
-    private void fucksable$suppressSelfConstraint(ServerSubLevel bodyA, ServerSubLevel bodyB, PhysicsConstraintConfiguration<?> configuration, CallbackInfoReturnable<PhysicsConstraintHandle> cir) {
-        if (!FixRegistry.isEnabled("constraint-self-fix")) return;
-
-        if (bodyA == bodyB && bodyA != null) {
-            String key = String.valueOf(Rapier3D.getID(bodyA));
-            if (fucksable$selfConstraintWarned.add(key)) {
-                FuckSable.LOGGER.warn("Suppressed self-constraint on body id={} (same SubLevel), returning null. This warning will not repeat.", key);
-            }
-            cir.setReturnValue(null);
-        }
-    }
+    // Note: addConstraint @Inject is in version-specific mixins:
+    // - RapierConstraintSelfFixMixinV1 for Sable 1.x (ServerSubLevel parameters)
+    // - RapierConstraintSelfFixMixinV2 for Sable 2.0.3+ (PhysicsPipelineBody parameters)
+    // Selection is handled by FuckSableMixinConfigPlugin based on Sable version.
 
     // --- Velocity queries ---
 

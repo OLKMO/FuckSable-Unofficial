@@ -22,7 +22,7 @@ import java.util.Set;
 @Mod(FuckSable.MOD_ID)
 public class FuckSable {
     public static final String MOD_ID = "fucksable";
-    public static final String VERSION = "1.6.8";
+    public static final String VERSION = "1.6.14";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
     private static FuckSableConfig config;
@@ -105,6 +105,21 @@ public class FuckSable {
             true, Set.of("createthreadedtrains"), FixEntry.Side.BOTH);
         FixRegistry.register("ctt-log-spam-fix",
             "Suppresses repeated warning logs from CreateThreadedTrains when train calculation fails, only logs once per error type",
+            true, Set.of("createthreadedtrains"), FixEntry.Side.BOTH);
+        FixRegistry.register("create-trackgraph-null-guard",
+            "Prevents server crash when Create train navigation searches with a null TrackNode (corrupted train state from CTT concurrent issues): TrackGraph.getConnectionsFrom returns empty Map instead of null to avoid NullPointerException in Navigation.search",
+            true, Set.of("create"), FixEntry.Side.BOTH);
+        FixRegistry.register("create-train-detach-nulledge-guard",
+            "Prevents server crash when TrackGraph.removeNode triggers Train.detachFromTracks on a train with corrupted state (null TravellingPoint.edge): skips TrainMigration creation for points with null edge instead of throwing NullPointerException in TrainMigration constructor",
+            true, Set.of("create"), FixEntry.Side.BOTH);
+        FixRegistry.register("sublevel-load-log-spam-fix",
+            "Throttles repeated 'Couldn't find sub-level' ERROR log spam from SubLevelStorage.attemptLoadSubLevel when a sub-level storage entry is corrupted/missing: logs once per chunk+index per 60s window instead of every retry",
+            true, Set.of("sable"), FixEntry.Side.BOTH);
+        FixRegistry.register("frogport-extract-limit",
+            "Prevents server freeze when FrogportBlockEntity.lazyTick pulls items from oversized adjacent inventories (hopper chains, Create warehouses): skips ItemHelper.extract when IItemHandler slot count exceeds 256, logs once per 60s",
+            true, Set.of("create"), FixEntry.Side.BOTH);
+        FixRegistry.register("ctt-posttick-timeout-guard",
+            "Prevents Watchdog server crash when CreateThreadedTrains.postTick blocks the main thread waiting for a stuck async train worker: replaces Future.get() with a 10s timeout, cancels and skips on timeout to keep the server alive",
             true, Set.of("createthreadedtrains"), FixEntry.Side.BOTH);
 
         // === 客户端修复 ===

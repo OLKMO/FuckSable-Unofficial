@@ -2,12 +2,15 @@
   "required": true,
   "priority": 1500,
   "package": "dev.fucksable.mixin",
+  "plugin": "dev.fucksable.FuckSableMixinConfigPlugin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "SubLevelHoldingChunkMapMixin",
     "SubLevelHoldingChunkMixin",
     "SubLevelStorageMixin",
     "RapierPhysicsPipelineMixin",
+    "RapierConstraintSelfFixMixinV1",
+    "RapierConstraintSelfFixMixinV2",
     "SubLevelStorageFileMixin",
     "EntityTeleportMixin",
     "LinkedTypewriterBlockMixin",
@@ -15,6 +18,7 @@
     "SteamVentValueBoxTransformMixin",
     "PlacementHandlerMixin",
     "ServerChunkCacheBlockChangedMixin",
+    "ServerLevelSendBlockUpdateMixin",
     "ServerLevelPlotBlockChangeMixin",
     "PlayerPositionGuardMixin",
     "LightEngineBoundsGuardMixin",
@@ -28,7 +32,12 @@
     "SlimeBearingFixMixin",
     "PhysicsStaffDragClipFixMixin",
     "SubLevelVolumeLimitMixin",
-    "VistaCameraChunkFixMixin"
+    "VistaCameraChunkFixMixin",
+    "TrackGraphNullConnectionsMixin",
+    "TrainDetachNullEdgeMixin",
+    "SubLevelStorageLogSpamMixin",
+    "FrogportItemExtractLimitMixin",
+    "CttPostTickTimeoutGuardMixin"
   ],
   "client": [
     "EffortlessParticleFixMixin"

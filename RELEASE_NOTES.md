@@ -1,3 +1,13 @@
+## v1.6.10
+
+### Bug Fixes
+- Prevent server crash when `TrackGraph.removeNode` triggers `Train.detachFromTracks` on a train with corrupted state (null `TravellingPoint.edge`): skips `TrainMigration` creation for points with null edge instead of throwing `NullPointerException` in `TrainMigration` constructor
+
+## v1.6.9
+
+### Bug Fixes
+- Prevent server crash when Create train navigation searches with a null TrackNode (corrupted train state from CTT concurrent issues): `TrackGraph.getConnectionsFrom` returns empty Map instead of null to avoid NullPointerException in `Navigation.search`
+
 ## v1.6.8
 
 ### Bug Fixes

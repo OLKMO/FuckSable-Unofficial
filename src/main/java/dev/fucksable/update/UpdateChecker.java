@@ -16,7 +16,7 @@ import java.time.Duration;
  */
 public final class UpdateChecker {
 
-    private static final String GITHUB_API = "https://api.github.com/repos/XSY-HYH/fuck-sable/releases/latest";
+    private static final String GITHUB_API = "https://api.github.com/repos/OLKMO/FuckSable-Unofficial/releases/latest";
     private static final Duration TIMEOUT = Duration.ofSeconds(15);
 
     private UpdateChecker() {}

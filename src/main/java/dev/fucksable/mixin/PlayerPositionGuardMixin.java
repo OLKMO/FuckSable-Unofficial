@@ -32,16 +32,18 @@ public class PlayerPositionGuardMixin {
         ServerPlayer self = (ServerPlayer) (Object) this;
         Vec3 pos = self.position();
 
-        // 世界边界检查
+        // 世界边界检查（拉回边界+5，避免紧贴边界）
         WorldBorder border = self.level().getWorldBorder();
-        double minX = border.getMinX() + 1.0;
-        double maxX = border.getMaxX() - 1.0;
-        double minZ = border.getMinZ() + 1.0;
-        double maxZ = border.getMaxZ() - 1.0;
+        double minX = border.getMinX() + 5.0;
+        double maxX = border.getMaxX() - 5.0;
+        double minZ = border.getMinZ() + 5.0;
+        double maxZ = border.getMaxZ() - 5.0;
 
         // Y 轴边界（原版高度 + 1000 格富裕空间）
-        double minY = self.level().getMinBuildHeight() + 1.0;
+        // Y 下界：创造模式拉回（+5），生存模式正常掉落不干预
+        double minY = self.level().getMinBuildHeight() + 5.0;
         double maxY = self.level().getMaxBuildHeight() + 1000.0;
+        boolean isCreative = self.isCreative();
 
         boolean outOfBounds = false;
         double clampedX = pos.x;
@@ -52,7 +54,7 @@ public class PlayerPositionGuardMixin {
         if (clampedX > maxX) { clampedX = maxX; outOfBounds = true; }
         if (clampedZ < minZ) { clampedZ = minZ; outOfBounds = true; }
         if (clampedZ > maxZ) { clampedZ = maxZ; outOfBounds = true; }
-        if (clampedY < minY) { clampedY = minY; outOfBounds = true; }
+        if (isCreative && clampedY < minY) { clampedY = minY; outOfBounds = true; }
         if (clampedY > maxY) { clampedY = maxY; outOfBounds = true; }
 
         if (outOfBounds) {
