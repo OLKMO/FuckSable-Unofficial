@@ -2,6 +2,25 @@
 
 All notable changes to FuckSable will be documented in this file.
 
+## [1.7.0] - 2026-07-16
+
+First release on the `OLKMO/FuckSable-Unofficial` GitHub repository. This version rolls up all unreleased fixes from 1.6.11–1.6.14 plus cross-version Sable 1.x/2.x support.
+
+### Major Changes
+- **Cross-version Sable support**: rewritten `FuckSableMixinConfigPlugin` version detection. Now uses `ModList.getMods()` to read the Sable mod version at runtime, with a class-signature fallback that inspects `RapierPhysicsPipeline.addConstraint` parameter types. This fixes the `NoSuchMethodException: ModFileInfo.getModInfos()` bug that silently disabled both V1/V2 constraint self-fix mixins on every Sable version.
+- **Version-specific constraint self-fix**: added `RapierConstraintSelfFixMixinV1` (Sable 1.x, `ServerSubLevel` params) and `RapierConstraintSelfFixMixinV2` (Sable 2.x, `PhysicsPipelineBody` params). The correct mixin is auto-selected by the plugin above, so a single FuckSable build now runs on both Sable 1.2.x and 2.0.x without compile-time dependencies.
+
+### New Fixes
+- `ServerLevelSendBlockUpdateMixin`: cancel `sendBlockUpdated` when the target plot holder is missing. Prevents the `UnsupportedOperationException: Cannot change blocks in nonexistent plot holder` crash that occurred on Sable 2.0.x when blocks were updated inside unloaded sub-levels.
+- `SubLevelStorageLogSpamMixin`: throttle the "Couldn't find sub-level at index N" ERROR log to once per 60 seconds per chunk+index pair. Stops log flooding when sub-level storage entries are corrupted or missing.
+- `FrogportItemExtractLimitMixin`: skip `ItemHelper.extract` when an adjacent inventory exceeds 256 slots. Prevents multi-second server freezes caused by FrogportBlockEntity scanning huge hopper chains / Create warehouses during `lazyTick`.
+- `CttPostTickTimeoutGuardMixin`: wrap `Future.get()` inside CTT `CreateThreadedTrains.postTick` with a 10-second timeout. If the async train worker task is stuck (e.g. Sable physics self-constraint loop), the future is cancelled and a warning is logged instead of hanging the main thread and triggering a Watchdog crash.
+
+### Changes
+- `PlayerPositionGuardMixin`: world-border clamp relaxed to ±5 (was +1). Y-axis clamp is now creative-only — survival players fall normally, creative players are pulled back above `minBuildHeight + 5`.
+- Update checker now queries the `OLKMO/FuckSable-Unofficial` Releases API.
+- Built jar is now named `FuckSable-Unofficial-1.7.0.jar`.
+
 ## [1.6.14] - 2026-07-08
 
 ### Bug Fixes

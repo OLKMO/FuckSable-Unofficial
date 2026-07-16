@@ -3,7 +3,7 @@ plugins {
 }
 
 base {
-    archivesName = "fucksable"
+    archivesName = "FuckSable-Unofficial"
 }
 
 java {
