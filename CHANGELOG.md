@@ -2,6 +2,33 @@
 
 All notable changes to FuckSable will be documented in this file.
 
+## [1.6.14] - 2026-07-08
+
+### Bug Fixes
+- Fix `FuckSableMixinConfigPlugin` version detection: use `ModList.getMods()` instead of nonexistent `getModInfos()`, add class signature detection fallback for Sable version (fixes `NoSuchMethodException` that disabled both V1/V2 constraint self-fix mixins)
+
+### New Fixes
+- Add `CttPostTickTimeoutGuardMixin`: 10s timeout on `Future.get()` in CTT `postTick` to prevent Watchdog server crash when async train worker is stuck
+- Add `RapierConstraintSelfFixMixinV1/V2`: version-specific mixins for Sable 1.x (ServerSubLevel params) and 2.x (PhysicsPipelineBody params) `addConstraint` method, auto-selected by `FuckSableMixinConfigPlugin`
+
+## [1.6.13] - 2026-06-29
+
+### New Fixes
+- Add `FrogportItemExtractLimitMixin`: skip `ItemHelper.extract` when adjacent inventory exceeds 256 slots to prevent server freeze from oversized inventories (hopper chains, Create warehouses)
+
+### Changes
+- Update `PlayerPositionGuardMixin`: clamp to world border+5 (was +1), creative-only Y-axis clamp (survival mode falls normally, creative mode clamped to minBuildHeight+5)
+
+## [1.6.12] - 2026-06-29
+
+### New Fixes
+- Add `SubLevelStorageLogSpamMixin`: throttle "Couldn't find sub-level" ERROR log to once per 60s per chunk+index, preventing log spam when sub-level storage entry is corrupted/missing
+
+## [1.6.11] - 2026-06-29
+
+### New Fixes
+- Add `ServerLevelSendBlockUpdateMixin`: cancel `sendBlockUpdated` when plot holder is missing to prevent `UnsupportedOperationException: Cannot change blocks in nonexistent plot holder` crash on Sable 2.0.x
+
 ## [1.6.10] - 2026-06-27
 
 ### Bug Fixes

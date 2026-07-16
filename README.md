@@ -60,6 +60,8 @@ Enabled by default, can be disabled individually via config. Fixes that depend o
 | `light-engine-bounds-guard` | 防止 SubLevel 区段超出世界高度限制时光照引擎崩溃。/ Prevents light engine crashes when SubLevel sections exceed world height limits during light propagation. |
 | `physics-ticket-guard` | 防止 PhysicsChunkTicketManager 导致 DistanceManager 内部状态损坏（ArrayIndexOutOfBoundsException）。/ Prevents server crash when PhysicsChunkTicketManager triggers DistanceManager internal state corruption. |
 | `sublevel-volume-limit` | 限制单个物理结构最大方块数量（8192，约 16x16x32 体积），防止过大的碰撞体导致 Rapier 原生崩溃。/ Limits maximum block count of a single physics structure (8192, approx 16x16x32), preventing Rapier native crashes from oversized collision bodies. |
+| `constraint-self-fix` | 抑制 Sable 物理管道中的自约束错误：当约束在 SubLevel 和自身之间创建时返回 null 而非抛出异常。自动适配 Sable 1.x（ServerSubLevel 参数）和 2.x（PhysicsPipelineBody 参数）。/ Suppresses self-constraint errors in Sable physics pipeline: returns null instead of throwing when a constraint is added between a SubLevel and itself. Auto-adapts to Sable 1.x (ServerSubLevel params) and 2.x (PhysicsPipelineBody params). |
+| `sublevel-load-log-spam-fix` | 限流 `SubLevelStorage.attemptLoadSubLevel` 在 sub-level 存储条目损坏/缺失时反复输出的 "Couldn't find sub-level" ERROR 日志：同一 chunk+index 每 60 秒只输出一次。/ Throttles repeated "Couldn't find sub-level" ERROR log spam from `SubLevelStorage.attemptLoadSubLevel` when a sub-level storage entry is corrupted/missing: logs once per chunk+index per 60s window. |
 
 ### 兼容性修复 / Compatibility Fixes
 
@@ -73,6 +75,10 @@ Enabled by default, can be disabled individually via config. Fixes that depend o
 | `copycats-lift-compat` | Sable, Copycats | 修 Copycats 方块缺少 facing 属性时触发 `sable$getNormal` 导致服务器崩溃。/ Prevents server crash when Copycats blocks with missing facing property trigger `sable$getNormal` in onBlockChange. |
 | `ctt-concurrent-fix` | Create ThreadedTrains | 修 CTT 和机械动力的并发问题。CTT 把火车 tick 移到工作线程，但只把 `manageEntities` 调度回主线程，`updateContraptionAnchors` 还在工作线程跑 —— 主线程读到不一致状态，`EntitySectionStorage` 里的 AVL 树被搞坏，轻则 NPE，重则整个服务器死循环卡死。/ Fixes concurrency issue between CTT and Create. CTT moves train ticking to worker threads but only schedules `manageEntities` back to main thread — `updateContraptionAnchors` still runs on workers. Main thread reads inconsistent state, corrupts AVL tree in `EntitySectionStorage`, resulting in NPE or entire server locking up in infinite loop. |
 | `ctt-log-spam-fix` | Create ThreadedTrains | 抑制 CTT 列车计算失败时的重复 WARN 日志刷屏，每种异常类型只输出一次。/ Suppresses repeated warning logs from CTT when train calculation fails, only logs once per error type. |
+| `ctt-posttick-timeout-guard` | Create ThreadedTrains | 防止 CTT `postTick` 在主线程 `Future.get()` 无限阻塞导致 Watchdog 超时崩溃：改为 10 秒超时，超时后取消任务并放行主线程。/ Prevents Watchdog server crash when CTT `postTick` blocks the main thread waiting for a stuck async train worker: replaces `Future.get()` with a 10s timeout, cancels and skips on timeout to keep the server alive. |
+| `create-trackgraph-null-guard` | Create | 防止 Create 列车导航搜索时 TrackNode 为 null（CTT 并发问题导致的损坏状态）导致服务器崩溃：`TrackGraph.getConnectionsFrom` 返回空 Map 而非 null。/ Prevents server crash when Create train navigation searches with a null TrackNode (corrupted train state from CTT concurrent issues): `TrackGraph.getConnectionsFrom` returns empty Map instead of null. |
+| `create-train-detach-nulledge-guard` | Create | 防止 `TrackGraph.removeNode` 触发 `Train.detachFromTracks` 时因 `TravellingPoint.edge` 为 null 导致服务器崩溃：跳过 edge 为 null 的点而非抛出 NPE。/ Prevents server crash when `TrackGraph.removeNode` triggers `Train.detachFromTracks` with null `TravellingPoint.edge`: skips points with null edge instead of throwing NPE. |
+| `frogport-extract-limit` | Create | 防止洼港（FrogportBlockEntity）`lazyTick` 从超大相邻库存拉取物品时服务器卡死：当 IItemHandler 槽位数超过 256 时跳过 `ItemHelper.extract`，每 60 秒告警一次。/ Prevents server freeze when FrogportBlockEntity `lazyTick` pulls items from oversized adjacent inventories: skips `ItemHelper.extract` when IItemHandler slot count exceeds 256, logs once per 60s. |
 | `effortless-particle-fix` | Effortless, Sable | 修 Effortless 对着 Sable 物理结构操作时客户端崩溃。Sable 射线检测返回 Plot 存储区域的远端坐标，Effortless 用该坐标生成粒子时客户端未加载该区块导致崩溃。修复方式：跳过未加载区块的粒子生成。/ Fixes Effortless client crash when interacting with Sable physics structures. Sable raycasting returns Plot storage area coordinates (distant chunks), Effortless uses these to generate particles but the client hasn't loaded those chunks. Fix: skip particle generation for unloaded chunks. |
 | `vista-camera-chunk-fix` | Vista, Sable | 修 Vista 摄像头区块加载与 Sable 物理结构不兼容：ViewFinder 在物理结构上时，其坐标是 SubLevel 内部坐标，Vista 用该坐标在主世界 force-load 区块导致 TPS 掉 0 和无限加载循环。修复方式：force-load 前将坐标投影到主世界坐标。/ Fixes Vista camera chunk loading incompatibility with Sable physics structures: when ViewFinder is on a physics structure, its coordinates are SubLevel-internal, Vista force-loads wrong chunks in the overworld causing TPS drop and infinite loading loops. Fix: project coordinates to world coordinates before force-loading. |
 
@@ -234,20 +240,13 @@ Dependency management is also a mess: API classes scattered across random packag
 
 ## 附加说明 / Additional Note
 
-自动更新走的是**中国 IP**，而且**没有 SSL 保护**。
+更新检查通过 **GitHub Releases API**（HTTPS）获取最新版本信息，启动时自动检查并在日志中提示。默认关闭，可通过配置文件开启。
 
-Auto-updates come from a **Chinese IP** with **no SSL protection**.
+Update checking uses the **GitHub Releases API** (HTTPS) to fetch the latest version info, automatically checks on startup and logs a notice if a new version is available. Disabled by default, can be enabled via config.
 
-默认是关闭的（除非你自己改了配置）。**不要开**。需要更新就去 Modrinth 下，防止供应链攻击。
+代码已开源，欢迎提交 Issue 和 PR。
 
-It's disabled by default (unless you changed the config). **DON'T enable it**. If you need an update, download from Modrinth to prevent supply chain attacks.
-
-> ~~"我暂时没想把它开源，但你们大可信任安全性 —— 毕竟 Modrinth 审核过了对吧？"~~
-> ~~"I'm not planning to open-source it for now, but you can trust its security — after all, Modrinth reviewed it, right?"~~
-
-现在开源了。
-
-Now it's open source. 
+The code is open source, feel free to submit Issues and PRs.
 
 ---
 

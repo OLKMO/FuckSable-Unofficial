@@ -1,3 +1,30 @@
+## v1.6.14
+
+### Bug Fixes
+- Fix `FuckSableMixinConfigPlugin` version detection: use `ModList.getMods()` + class signature fallback (fixes `NoSuchMethodException` that disabled both V1/V2 constraint self-fix mixins)
+
+### New Fixes
+- Add `ctt-posttick-timeout-guard`: 10s timeout on `Future.get()` in CTT `postTick` to prevent Watchdog server crash
+- Add `RapierConstraintSelfFixMixinV1/V2`: version-specific mixins for Sable 1.x and 2.x `addConstraint`, auto-selected by `FuckSableMixinConfigPlugin`
+
+## v1.6.13
+
+### New Fixes
+- Add `frogport-extract-limit`: skip `ItemHelper.extract` when adjacent inventory exceeds 256 slots to prevent server freeze
+
+### Changes
+- Update `player-position-guard`: clamp to world border+5, creative-only Y-axis clamp (survival falls normally)
+
+## v1.6.12
+
+### New Fixes
+- Add `sublevel-load-log-spam-fix`: throttle "Couldn't find sub-level" ERROR log to once per 60s per chunk+index
+
+## v1.6.11
+
+### New Fixes
+- Add `ServerLevelSendBlockUpdateMixin`: cancel `sendBlockUpdated` when plot holder missing to prevent crash on Sable 2.0.x
+
 ## v1.6.10
 
 ### Bug Fixes
