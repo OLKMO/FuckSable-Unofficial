@@ -1,9 +1,14 @@
 package dev.fucksable;
 
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.spongepowered.asm.mixin.extensibility.IMixinConfigPlugin;
 import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 
+import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Set;
@@ -43,11 +48,14 @@ public class FuckSableMixinConfigPlugin implements IMixinConfigPlugin {
                     Method getVersion = info.getClass().getMethod("getVersion");
                     Object version = getVersion.invoke(info);
 
-                    Class<?> artifactVersionClass = Class.forName("org.apache.maven.artifact.versioning.ArtifactVersion");
                     Class<?> defaultArtifactVersionClass = Class.forName("org.apache.maven.artifact.versioning.DefaultArtifactVersion");
                     Object threshold = defaultArtifactVersionClass.getConstructor(String.class).newInstance("2.0.0");
-                    Method compareTo = artifactVersionClass.getMethod("compareTo", artifactVersionClass);
-                    int result = (int) compareTo.invoke(version, threshold);
+                    // 不能用 getMethod("compareTo", artifactVersionClass) 查找：
+                    // 在 Mohist/Youer 等服务端上，ArtifactVersion.compareTo 是 Comparable<T> 的桥接方法，
+                    // 编译后参数类型为 Object，精确签名查找会抛 NoSuchMethodException。
+                    // 直接通过 Comparable 接口调用，由 JVM 多态分派到具体实现。
+                    @SuppressWarnings({"unchecked", "rawtypes"})
+                    int result = ((Comparable) version).compareTo(threshold);
                     boolean v2 = result >= 0;
                     sableVersionState = v2 ? 2 : 1;
                     FuckSable.LOGGER.info("Detected Sable version {}, enabling {} constraint self-fix mixin",
@@ -65,26 +73,58 @@ public class FuckSableMixinConfigPlugin implements IMixinConfigPlugin {
     }
 
     /**
-     * Fallback：直接检测 RapierPhysicsPipeline.addConstraint 的参数类型。
-     * V1 (1.x) 参数为 ServerSubLevel，V2 (2.x) 参数为 PhysicsPipelineBody。
+     * Fallback：通过读取 class 字节码检测 RapierPhysicsPipeline.addConstraint 的参数类型。
+     * <p>
+     * V1 (1.x) 第一个参数为 ServerSubLevel，V2 (2.x) 第一个参数为 PhysicsPipelineBody。
+     * <p>
+     * 注意：不能用 Class.forName 加载 RapierPhysicsPipeline，因为此方法在 mixin prepare 阶段被调用
+     * （通过 shouldApplyMixin），此时加载一个被 mixin 处理的类会触发 ReEntrantTransformerError。
+     * 改用 ClassLoader.getResourceAsStream + ASM 读取方法描述符，避免触发类加载。
      */
     private static int detectByClassSignature() {
+        String className = "dev.ryanhcode.sable.physics.impl.rapier.RapierPhysicsPipeline";
+        String classResource = className.replace('.', '/') + ".class";
         try {
-            Class<?> pipelineClass = Class.forName("dev.ryanhcode.sable.physics.impl.rapier.RapierPhysicsPipeline");
-            for (Method m : pipelineClass.getDeclaredMethods()) {
-                if ("addConstraint".equals(m.getName()) && m.getParameterCount() >= 2) {
-                    Class<?> firstParam = m.getParameterTypes()[0];
-                    String paramTypeName = firstParam.getName();
-                    if (paramTypeName.contains("PhysicsPipelineBody")) {
-                        sableVersionState = 2;
-                        FuckSable.LOGGER.info("Detected Sable >=2.0.0 by class signature (addConstraint uses PhysicsPipelineBody), enabling V2 mixin");
-                        return sableVersionState;
-                    } else {
-                        sableVersionState = 1;
-                        FuckSable.LOGGER.info("Detected Sable <2.0.0 by class signature (addConstraint uses {}), enabling V1 mixin", paramTypeName);
-                        return sableVersionState;
-                    }
+            ClassLoader loader = Thread.currentThread().getContextClassLoader();
+            if (loader == null) loader = FuckSableMixinConfigPlugin.class.getClassLoader();
+            try (InputStream in = loader.getResourceAsStream(classResource)) {
+                if (in == null) {
+                    FuckSable.LOGGER.warn("Sable class resource not found: {}, disabling both constraint self-fix mixins", classResource);
+                    sableVersionState = 0;
+                    return sableVersionState;
                 }
+                byte[] bytes = in.readAllBytes();
+                ClassReader reader = new ClassReader(bytes);
+                final int[] detected = {0};
+                reader.accept(new ClassVisitor(Opcodes.ASM9) {
+                    @Override
+                    public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
+                        if (detected[0] != 0) return null;
+                        if (!"addConstraint".equals(name) || descriptor == null || descriptor.isEmpty()) return null;
+                        // descriptor 格式: (Lxxx/yyy;Lxxx/yyy;...)Lreturn;
+                        // 取第一个参数类型
+                        if (descriptor.length() < 3 || descriptor.charAt(1) != 'L') return null;
+                        int start = 2;
+                        int end = descriptor.indexOf(';', start);
+                        if (end < 0) return null;
+                        String firstParam = descriptor.substring(start, end);
+                        if (firstParam.contains("PhysicsPipelineBody")) {
+                            detected[0] = 2;
+                        } else {
+                            detected[0] = 1;
+                        }
+                        return null;
+                    }
+                }, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
+                sableVersionState = detected[0];
+                if (sableVersionState == 2) {
+                    FuckSable.LOGGER.info("Detected Sable >=2.0.0 by class signature (addConstraint uses PhysicsPipelineBody), enabling V2 mixin");
+                } else if (sableVersionState == 1) {
+                    FuckSable.LOGGER.info("Detected Sable <2.0.0 by class signature (addConstraint first param is not PhysicsPipelineBody), enabling V1 mixin");
+                } else {
+                    FuckSable.LOGGER.warn("addConstraint method not found in {}, disabling both constraint self-fix mixins", className);
+                }
+                return sableVersionState;
             }
         } catch (Throwable t) {
             FuckSable.LOGGER.error("Class signature detection also failed, disabling both constraint self-fix mixins to avoid crash", t);

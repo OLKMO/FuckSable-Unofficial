@@ -85,3 +85,10 @@ tasks.named('processResources', ProcessResources).configure {
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
 }
+
+// 确保 jar 产物命名为 FuckSable-Unofficial-x.x.x.jar
+tasks.named('jar', Jar).configure {
+    // archivesName 已经在 base { ... } 中设置为 FuckSable-Unofficial
+    // 这里仅确保命名格式正确，实际产物名为 ${archivesBaseName}-${version}.jar
+    // 每次升级版本号后构建，新文件名与旧版不同，因此自然保留历史版本
+}

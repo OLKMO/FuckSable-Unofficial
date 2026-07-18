@@ -2,6 +2,13 @@
 
 All notable changes to FuckSable will be documented in this file.
 
+## [1.7.1] - 2026-07-18
+
+### Bug Fixes
+- Fix `FuckSableMixinConfigPlugin` crashing on Mohist/Youer 1.21.1 dedicated servers during mixin prepare phase:
+  - `ArtifactVersion.compareTo` lookup via `getMethod("compareTo", artifactVersionClass)` threw `NoSuchMethodException` because `Comparable<ArtifactVersion>` bridge method has parameter type `Object` (erased), not `ArtifactVersion`. Replaced with direct `((Comparable) version).compareTo(threshold)` call dispatched via JVM polymorphism.
+  - Fallback `detectByClassSignature` used `Class.forName("dev.ryanhcode.sable.physics.impl.rapier.RapierPhysicsPipeline")` which triggered `ReEntrantTransformerError` because loading a mixin-processed class during the prepare phase re-enters the mixin transformer. Rewritten to use `ClassLoader.getResourceAsStream` + ASM `ClassReader` to parse method descriptors directly from class bytecode without triggering class loading.
+
 ## [1.7.0] - 2026-07-16
 
 First release on the `OLKMO/FuckSable-Unofficial` GitHub repository. This version rolls up all unreleased fixes from 1.6.11–1.6.14 plus cross-version Sable 1.x/2.x support.

@@ -1,3 +1,10 @@
+## v1.7.1
+
+### Bug Fixes
+- Fix server startup crash on **Mohist/Youer 1.21.1** dedicated servers caused by `ReEntrantTransformerError: Re-entrance error` in `FuckSableMixinConfigPlugin`:
+  - **`NoSuchMethodException` on `ArtifactVersion.compareTo`**: on hybrid servers (Mohist/Youer), `ArtifactVersion`'s `compareTo` is a `Comparable<ArtifactVersion>` bridge method whose erased parameter type is `Object`, so `getMethod("compareTo", artifactVersionClass)` failed to find it. Replaced with a direct `((Comparable) version).compareTo(threshold)` call dispatched via JVM polymorphism.
+  - **`ReEntrantTransformerError` in `detectByClassSignature`**: the fallback used `Class.forName("dev.ryanhcode.sable.physics.impl.rapier.RapierPhysicsPipeline")` during the mixin prepare phase, which re-entered the mixin transformer (loading a mixin-processed class while the transformer was still preparing). Rewrote `detectByClassSignature` to use `ClassLoader.getResourceAsStream` + ASM `ClassReader` to parse method descriptors directly from class bytecode, without triggering any class loading.
+
 ## v1.7.0
 
 First release on the `OLKMO/FuckSable-Unofficial` GitHub repository. Rolls up all unreleased fixes from 1.6.11–1.6.14 plus cross-version Sable 1.x/2.x support.
