@@ -37,11 +37,13 @@ v1.7.3 is broken, please skip it and use v1.7.4 instead.
 
 ## v1.7.3
 
-### New Fix: `entity-lookup-remove-guard`
+## 新增修复 / New Fix: `entity-lookup-remove-guard`
+
+拦截 `PersistentEntitySectionManager.stopTracking` 中的 `EntityLookup.remove` 调用，捕获 `Int2ObjectLinkedOpenHashMap.fixPointers` 抛出的 `ArrayIndexOutOfBoundsException`，避免单个实体移除失败导致整个服务器 tick 崩溃。
 
 Catches `ArrayIndexOutOfBoundsException` thrown by `Int2ObjectLinkedOpenHashMap.fixPointers` inside `EntityLookup.remove` during `PersistentEntitySectionManager.stopTracking`, preventing single-entity removal failures from crashing the server tick loop.
 
-### Crash being fixed
+### 修复的崩溃 / Crash being fixed
 
 ```
 java.lang.ArrayIndexOutOfBoundsException: Index -1 out of bounds for length 513
@@ -54,57 +56,102 @@ java.lang.ArrayIndexOutOfBoundsException: Index -1 out of bounds for length 513
     at net.minecraft.server.MinecraftServer.tickServer(MinecraftServer.java:1383)
 ```
 
-### Root cause
+### 根因 / Root cause
+
+Sable 的 SubLevel 实体管理（跨维度/多线程）破坏了 `EntityLookup` 内部 `Int2ObjectLinkedOpenHashMap` 的链表状态。当某个 entry 的 `prev`/`next` 指针被设为 `-1`（哨兵值表示"无链接"）却被当作数组下标访问时，`fixPointers` 抛出 `Index -1 out of bounds for length N`。异常沿 `PersistentEntitySectionManager.stopTracking` → `updateChunkStatus` → `ChunkMap.onFullChunkStatusChange` → `ChunkHolder.demoteFullChunk` → `MinecraftServer.tickServer` 一路传播，导致 tick 循环崩溃。
 
 Sable's SubLevel entity management (cross-dimension / multi-threaded) corrupts the internal linked-map state of `EntityLookup`'s backing `Int2ObjectLinkedOpenHashMap`. When an entry's `prev` / `next` pointer is set to `-1` (sentinel meaning "no link") but later accessed as an array index, `fixPointers` throws `Index -1 out of bounds for length N`. The exception propagates up through `PersistentEntitySectionManager.stopTracking` -> `updateChunkStatus` -> `ChunkMap.onFullChunkStatusChange` -> `ChunkHolder.demoteFullChunk` -> `MinecraftServer.tickServer`, crashing the tick loop.
 
-### How
+### 实现方式 / How
+
+- 在 `PersistentEntitySectionManager.stopTracking` 中的 `EntityLookup.remove` 调用上加 `@Redirect`
+- 在调用点捕获 `ArrayIndexOutOfBoundsException`（以及其他 `Throwable`）
+- 每次发生时输出一条 `WARN` 日志（包含实体引用），便于排查
+- tick 继续正常运行，仅跳过出错实体的移除操作
 
 - `@Redirect` on the `EntityLookup.remove` invocation inside `PersistentEntitySectionManager.stopTracking`
 - Catches `ArrayIndexOutOfBoundsException` (and any other `Throwable`) at the call site
 - Emits a single `WARN` log per occurrence with the entity reference for diagnosis
 - Tick continues normally; only the offending entity's removal is skipped
 
-### Caveats
+### 注意事项 / Caveats
+
+这是**治标修复**。它让服务器保持运行但不会修复 `Int2ObjectLinkedOpenHashMap` 的底层状态——损坏的 entry 仍然存在，可能在后续 `remove` 调用中再次出现。真正的修复应在 Sable 的实体卸载 / SubLevel 实体追踪代码中（参见 `sable.mixins.json:entity.entity_unloading.PersistentEntitySectionManagerMixin` 和 `sable.mixins.json:entity.server_entities_tick.ChunkMapMixin`）。
 
 This is a **symptomatic** fix. It keeps the server alive but does not repair the underlying `Int2ObjectLinkedOpenHashMap` state — the corrupted entry remains and may surface again on subsequent `remove` calls. The true fix belongs in Sable's entity unloading / SubLevel entity tracking code (see `sable.mixins.json:entity.entity_unloading.PersistentEntitySectionManagerMixin` and `sable.mixins.json:entity.server_entities_tick.ChunkMapMixin`).
 
-### Compatibility
+### 兼容性 / Compatibility
 
-- Mixin target: `net.minecraft.world.level.entity.PersistentEntitySectionManager`
-- Redirect target: `EntityLookup.remove(Entity)` invocation in `stopTracking`
-- Sable's `PersistentEntitySectionManagerMixin` uses `@Inject` on a different method (`processChunkUnload`), so there is no handler conflict.
+- Mixin 目标 / Mixin target: `net.minecraft.world.level.entity.PersistentEntitySectionManager`
+- Redirect 目标 / Redirect target: `stopTracking` 中的 `EntityLookup.remove(Entity)` 调用 / `EntityLookup.remove(Entity)` invocation in `stopTracking`
+- Sable 的 `PersistentEntitySectionManagerMixin` 使用 `@Inject` 注入在不同方法（`processChunkUnload`）上，因此不会发生 handler 冲突 / Sable's `PersistentEntitySectionManagerMixin` uses `@Inject` on a different method (`processChunkUnload`), so there is no handler conflict.
 
-## v1.7.2
+## v1.7.2 - UDP 无效数据包防护 / UDP Invalid Packet Guard
 
-### New Fixes
-- **`udp-invalid-packet-guard`**: silently drops UDP packets whose first byte is an invalid Sable packet ID (e.g. `254`, the legacy Minecraft server list ping packet) at the head of `SableUDPPacketDecoder.decode`. Without this guard, Sable reads the byte as a packet ID, sees it is `>= SableUDPPacketType.VALUES.length`, and throws `IOException("Received an invalid packet ID: 254")`. The exception propagates up the Netty pipeline as a `DecoderException`, gets caught by Sable's channel handler, and produces a recurring `Server UDP channel caught exception` ERROR log entry every time someone pings or scans the Sable UDP port. The fix `@Inject`s at `decode` HEAD, peeks the first byte without consuming `readerIndex`, and cancels the decode call if the ID is out of range. The valid ID upper bound is read via reflection from `SableUDPPacketType.VALUES` (cached after first call) and falls back to `5` (Sable 1.2.2 has 6 packet types) if reflection fails.
+### 新增修复 / New Fix: `udp-invalid-packet-guard`
+
+在 `SableUDPPacketDecoder.decode` 头部静默丢弃 packet ID 越界的 UDP 数据包（如旧版 Minecraft 服务器列表 ping 的 packet ID 254），而不是让 Sable 抛出 `IOException("Received an invalid packet ID: 254")`。
+
+Silently drops UDP packets with invalid packet IDs (e.g. legacy Minecraft server list ping packet ID 254) at the head of `SableUDPPacketDecoder.decode`, instead of letting Sable throw `IOException("Received an invalid packet ID: 254")`.
+
+### 原因 / Why
+
+没有这个防护时，Sable 读取第一个字节作为 packet ID，发现它 `>= SableUDPPacketType.VALUES.length`，抛出 `IOException`。异常沿 Netty pipeline 作为 `DecoderException` 向上传播，被 Sable 的 channel handler 捕获后输出 `Server UDP channel caught exception` ERROR 日志——每当有人 ping 或扫描 Sable 的 UDP 端口时都会重复刷屏。
+
+Without this guard, Sable reads the first byte as a packet ID, sees it is `>= SableUDPPacketType.VALUES.length`, and throws `IOException`. The exception propagates up the Netty pipeline as a `DecoderException`, gets caught by Sable's channel handler, and produces a recurring `Server UDP channel caught exception` ERROR log entry every time someone pings or scans the Sable UDP port.
+
+### 实现方式 / How
+
+- 在 `decode` HEAD 处 `@Inject`
+- `@Inject` at `decode` HEAD
+- peek 第一个字节，不消费 `readerIndex`
+- Peek the first byte without consuming `readerIndex`
+- 若 packet ID 超过 `SableUDPPacketType.VALUES.length`，cancel decode 调用
+- If packet ID exceeds `SableUDPPacketType.VALUES.length`, cancel the decode call
+- 合法 ID 上界通过反射从 `SableUDPPacketType.VALUES` 读取（首次调用后缓存），反射失败时回退到 5（Sable 1.2.2 有 6 个 packet type）
+- Valid ID upper bound is read via reflection from `SableUDPPacketType.VALUES` (cached after first call), falls back to 5 (Sable 1.2.2 has 6 packet types) if reflection fails
 
 ## v1.7.1
 
-### Bug Fixes
-- Fix server startup crash on **Mohist/Youer 1.21.1** dedicated servers caused by `ReEntrantTransformerError: Re-entrance error` in `FuckSableMixinConfigPlugin`:
-  - **`NoSuchMethodException` on `ArtifactVersion.compareTo`**: on hybrid servers (Mohist/Youer), `ArtifactVersion`'s `compareTo` is a `Comparable<ArtifactVersion>` bridge method whose erased parameter type is `Object`, so `getMethod("compareTo", artifactVersionClass)` failed to find it. Replaced with a direct `((Comparable) version).compareTo(threshold)` call dispatched via JVM polymorphism.
-  - **`ReEntrantTransformerError` in `detectByClassSignature`**: the fallback used `Class.forName("dev.ryanhcode.sable.physics.impl.rapier.RapierPhysicsPipeline")` during the mixin prepare phase, which re-entered the mixin transformer (loading a mixin-processed class while the transformer was still preparing). Rewrote `detectByClassSignature` to use `ClassLoader.getResourceAsStream` + ASM `ClassReader` to parse method descriptors directly from class bytecode, without triggering any class loading.
+### Bug 修复 / Bug Fixes
+
+修复在 Mohist/Youer 1.21.1 专用服务端上由 `ReEntrantTransformerError: Re-entrance error` in `FuckSableMixinConfigPlugin` 引起的服务器启动崩溃：
+
+Fix server startup crash on **Mohist/Youer 1.21.1** dedicated servers caused by `ReEntrantTransformerError: Re-entrance error` in `FuckSableMixinConfigPlugin`:
+
+- **`ArtifactVersion.compareTo` 的 `NoSuchMethodException`**: 在混合服务端（Mohist/Youer）上，`ArtifactVersion` 的 `compareTo` 是 `Comparable<ArtifactVersion>` 桥接方法，参数类型被擦除为 `Object`，所以 `getMethod("compareTo", artifactVersionClass)` 找不到它。改为直接使用 `((Comparable) version).compareTo(threshold)` 通过 JVM 多态派发。/ **`NoSuchMethodException` on `ArtifactVersion.compareTo`**: on hybrid servers (Mohist/Youer), `ArtifactVersion`'s `compareTo` is a `Comparable<ArtifactVersion>` bridge method whose erased parameter type is `Object`, so `getMethod("compareTo", artifactVersionClass)` failed to find it. Replaced with a direct `((Comparable) version).compareTo(threshold)` call dispatched via JVM polymorphism.
+
+- **`detectByClassSignature` 中的 `ReEntrantTransformerError`**: fallback 使用 `Class.forName("dev.ryanhcode.sable.physics.impl.rapier.RapierPhysicsPipeline")` 在 mixin prepare 阶段重新进入了 mixin transformer（在 transformer 仍在准备时加载了一个被 mixin 处理的类）。重写 `detectByClassSignature` 使用 `ClassLoader.getResourceAsStream` + ASM `ClassReader` 直接从字节码解析方法描述符，不触发任何类加载。/ **`ReEntrantTransformerError` in `detectByClassSignature`**: the fallback used `Class.forName("dev.ryanhcode.sable.physics.impl.rapier.RapierPhysicsPipeline")` during the mixin prepare phase, which re-entered the mixin transformer (loading a mixin-processed class while the transformer was still preparing). Rewrote `detectByClassSignature` to use `ClassLoader.getResourceAsStream` + ASM `ClassReader` to parse method descriptors directly from class bytecode, without triggering any class loading.
 
 ## v1.7.0
 
+`OLKMO/FuckSable-Unofficial` GitHub 仓库的首次发布。汇总了 1.6.11–1.6.14 期间所有未发布的修复，并新增跨版本 Sable 1.x/2.x 支持。
+
 First release on the `OLKMO/FuckSable-Unofficial` GitHub repository. Rolls up all unreleased fixes from 1.6.11–1.6.14 plus cross-version Sable 1.x/2.x support.
 
-### Major Changes
-- **Cross-version Sable support**: rewritten `FuckSableMixinConfigPlugin` version detection. Now uses `ModList.getMods()` to read the Sable mod version at runtime, with a class-signature fallback that inspects `RapierPhysicsPipeline.addConstraint` parameter types. Fixes the `NoSuchMethodException: ModFileInfo.getModInfos()` bug that silently disabled both V1/V2 constraint self-fix mixins on every Sable version.
-- **Version-specific constraint self-fix**: added `RapierConstraintSelfFixMixinV1` (Sable 1.x, `ServerSubLevel` params) and `RapierConstraintSelfFixMixinV2` (Sable 2.x, `PhysicsPipelineBody` params). The correct mixin is auto-selected by the plugin above, so a single FuckSable build now runs on both Sable 1.2.x and 2.0.x without compile-time dependencies.
+### 重大变更 / Major Changes
 
-### New Fixes
-- `ServerLevelSendBlockUpdateMixin`: cancel `sendBlockUpdated` when the target plot holder is missing. Prevents `UnsupportedOperationException: Cannot change blocks in nonexistent plot holder` crash on Sable 2.0.x.
-- `SubLevelStorageLogSpamMixin`: throttle "Couldn't find sub-level at index N" ERROR log to once per 60s per chunk+index. Stops log flooding when sub-level storage entries are corrupted.
-- `FrogportItemExtractLimitMixin`: skip `ItemHelper.extract` when adjacent inventory exceeds 256 slots. Prevents multi-second server freezes caused by FrogportBlockEntity scanning huge hopper chains / Create warehouses.
-- `CttPostTickTimeoutGuardMixin`: 10s timeout on `Future.get()` in CTT `postTick`. If the async train worker is stuck (e.g. Sable physics self-constraint loop), the future is cancelled and a warning is logged instead of hanging the main thread and triggering a Watchdog crash.
+- **跨版本 Sable 支持 / Cross-version Sable support**: 重写 `FuckSableMixinConfigPlugin` 版本检测。改用 `ModList.getMods()` 在运行时读取 Sable mod 版本，并添加类签名 fallback 检查 `RapierPhysicsPipeline.addConstraint` 参数类型。修复了 `NoSuchMethodException: ModFileInfo.getModInfos()` bug——该 bug 在所有 Sable 版本上都会静默禁用 V1/V2 自约束修复 mixin。/ Rewritten `FuckSableMixinConfigPlugin` version detection. Now uses `ModList.getMods()` to read the Sable mod version at runtime, with a class-signature fallback that inspects `RapierPhysicsPipeline.addConstraint` parameter types. Fixes the `NoSuchMethodException: ModFileInfo.getModInfos()` bug that silently disabled both V1/V2 constraint self-fix mixins on every Sable version.
 
-### Changes
-- `PlayerPositionGuardMixin`: world-border clamp relaxed to ±5 (was +1). Y-axis clamp is now creative-only — survival players fall normally, creative players are pulled back above `minBuildHeight + 5`.
-- Update checker now queries the `OLKMO/FuckSable-Unofficial` Releases API.
-- Built jar is now named `FuckSable-Unofficial-1.7.0.jar`.
+- **按版本自适应的约束自修复 / Version-specific constraint self-fix**: 新增 `RapierConstraintSelfFixMixinV1`（Sable 1.x，`ServerSubLevel` 参数）和 `RapierConstraintSelfFixMixinV2`（Sable 2.x，`PhysicsPipelineBody` 参数）。正确的 mixin 由上面的插件自动选择，因此单个 FuckSable 构建现在可同时在 Sable 1.2.x 和 2.0.x 上运行，无需编译时依赖。/ Added `RapierConstraintSelfFixMixinV1` (Sable 1.x, `ServerSubLevel` params) and `RapierConstraintSelfFixMixinV2` (Sable 2.x, `PhysicsPipelineBody` params). The correct mixin is auto-selected by the plugin above, so a single FuckSable build now runs on both Sable 1.2.x and 2.0.x without compile-time dependencies.
+
+### 新增修复 / New Fixes
+
+- `ServerLevelSendBlockUpdateMixin`: 当目标 plot holder 不存在时取消 `sendBlockUpdated` 调用。防止在 Sable 2.0.x 上出现 `UnsupportedOperationException: Cannot change blocks in nonexistent plot holder` 崩溃。/ Cancels `sendBlockUpdated` when the target plot holder is missing. Prevents `UnsupportedOperationException: Cannot change blocks in nonexistent plot holder` crash on Sable 2.0.x.
+
+- `SubLevelStorageLogSpamMixin`: 将 "Couldn't find sub-level at index N" ERROR 日志限流为同一 chunk+index 每 60 秒输出一次。避免 sub-level 存储条目损坏时日志刷屏。/ Throttles "Couldn't find sub-level at index N" ERROR log to once per 60s per chunk+index. Stops log flooding when sub-level storage entries are corrupted.
+
+- `FrogportItemExtractLimitMixin`: 当相邻库存槽位数超过 256 时跳过 `ItemHelper.extract`。防止 FrogportBlockEntity 扫描超大型漏斗链 / Create 仓库导致服务器卡死数秒。/ Skips `ItemHelper.extract` when adjacent inventory exceeds 256 slots. Prevents multi-second server freezes caused by FrogportBlockEntity scanning huge hopper chains / Create warehouses.
+
+- `CttPostTickTimeoutGuardMixin`: 在 CTT `postTick` 中给 `Future.get()` 加 10 秒超时。若异步火车工作线程卡住（例如 Sable 物理自约束死循环），future 会被取消并打 WARN 日志，而不是让主线程挂起触发 Watchdog 崩溃。/ 10s timeout on `Future.get()` in CTT `postTick`. If the async train worker is stuck (e.g. Sable physics self-constraint loop), the future is cancelled and a warning is logged instead of hanging the main thread and triggering a Watchdog crash.
+
+### 变更 / Changes
+
+- `PlayerPositionGuardMixin`: 世界边界钳制放宽到 ±5（原 +1）。Y 轴钳制改为仅创造模式生效——生存模式玩家正常坠落，创造模式玩家被拉回 `minBuildHeight + 5` 之上。/ World-border clamp relaxed to ±5 (was +1). Y-axis clamp is now creative-only — survival players fall normally, creative players are pulled back above `minBuildHeight + 5`.
+
+- 更新检查器现在查询 `OLKMO/FuckSable-Unofficial` Releases API。/ Update checker now queries the `OLKMO/FuckSable-Unofficial` Releases API.
+
+- 构建产物重命名为 `FuckSable-Unofficial-1.7.0.jar`。/ Built jar is now named `FuckSable-Unofficial-1.7.0.jar`.
 
 ## v1.6.14
 
