@@ -1,3 +1,43 @@
+## v1.7.3
+
+### New Fix: `entity-lookup-remove-guard`
+
+Catches `ArrayIndexOutOfBoundsException` thrown by `Int2ObjectLinkedOpenHashMap.fixPointers` inside `EntityLookup.remove` during `PersistentEntitySectionManager.stopTracking`, preventing single-entity removal failures from crashing the server tick loop.
+
+### Crash being fixed
+
+```
+java.lang.ArrayIndexOutOfBoundsException: Index -1 out of bounds for length 513
+    at it.unimi.dsi.fastutil.ints.Int2ObjectLinkedOpenHashMap.fixPointers(Int2ObjectLinkedOpenHashMap.java:979)
+    at it.unimi.dsi.fastutil.ints.Int2ObjectLinkedOpenHashMap.removeEntry(Int2ObjectLinkedOpenHashMap.java:263)
+    at it.unimi.dsi.fastutil.ints.Int2ObjectLinkedOpenHashMap.remove(Int2ObjectLinkedOpenHashMap.java:372)
+    at net.minecraft.world.level.entity.EntityLookup.remove(EntityLookup.java:52)
+    at net.minecraft.world.level.entity.PersistentEntitySectionManager.stopTracking(PersistentEntitySectionManager.java:157)
+    ...
+    at net.minecraft.server.MinecraftServer.tickServer(MinecraftServer.java:1383)
+```
+
+### Root cause
+
+Sable's SubLevel entity management (cross-dimension / multi-threaded) corrupts the internal linked-map state of `EntityLookup`'s backing `Int2ObjectLinkedOpenHashMap`. When an entry's `prev` / `next` pointer is set to `-1` (sentinel meaning "no link") but later accessed as an array index, `fixPointers` throws `Index -1 out of bounds for length N`. The exception propagates up through `PersistentEntitySectionManager.stopTracking` -> `updateChunkStatus` -> `ChunkMap.onFullChunkStatusChange` -> `ChunkHolder.demoteFullChunk` -> `MinecraftServer.tickServer`, crashing the tick loop.
+
+### How
+
+- `@Redirect` on the `EntityLookup.remove` invocation inside `PersistentEntitySectionManager.stopTracking`
+- Catches `ArrayIndexOutOfBoundsException` (and any other `Throwable`) at the call site
+- Emits a single `WARN` log per occurrence with the entity reference for diagnosis
+- Tick continues normally; only the offending entity's removal is skipped
+
+### Caveats
+
+This is a **symptomatic** fix. It keeps the server alive but does not repair the underlying `Int2ObjectLinkedOpenHashMap` state — the corrupted entry remains and may surface again on subsequent `remove` calls. The true fix belongs in Sable's entity unloading / SubLevel entity tracking code (see `sable.mixins.json:entity.entity_unloading.PersistentEntitySectionManagerMixin` and `sable.mixins.json:entity.server_entities_tick.ChunkMapMixin`).
+
+### Compatibility
+
+- Mixin target: `net.minecraft.world.level.entity.PersistentEntitySectionManager`
+- Redirect target: `EntityLookup.remove(Entity)` invocation in `stopTracking`
+- Sable's `PersistentEntitySectionManagerMixin` uses `@Inject` on a different method (`processChunkUnload`), so there is no handler conflict.
+
 ## v1.7.2
 
 ### New Fixes

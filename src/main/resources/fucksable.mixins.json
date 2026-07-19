@@ -38,7 +38,8 @@
     "SubLevelStorageLogSpamMixin",
     "FrogportItemExtractLimitMixin",
     "CttPostTickTimeoutGuardMixin",
-    "SableUDPPacketDecoderMixin"
+    "SableUDPPacketDecoderMixin",
+    "PersistentEntitySectionManagerStopTrackingGuardMixin"
   ],
   "client": [
     "EffortlessParticleFixMixin"

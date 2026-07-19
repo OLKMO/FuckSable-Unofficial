@@ -22,7 +22,7 @@ import java.util.Set;
 @Mod(FuckSable.MOD_ID)
 public class FuckSable {
     public static final String MOD_ID = "fucksable";
-    public static final String VERSION = "1.7.2";
+    public static final String VERSION = "1.7.3";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
     private static FuckSableConfig config;
@@ -117,6 +117,9 @@ public class FuckSable {
             true, Set.of("sable"), FixEntry.Side.BOTH);
         FixRegistry.register("udp-invalid-packet-guard",
             "Silently drops UDP packets with invalid packet IDs (e.g. legacy server list ping packet ID 254) instead of letting SableUDPPacketDecoder throw IOException and spam 'Server UDP channel caught exception' ERROR logs",
+            true, Set.of("sable"), FixEntry.Side.BOTH);
+        FixRegistry.register("entity-lookup-remove-guard",
+            "Catches ArrayIndexOutOfBoundsException thrown by Int2ObjectLinkedOpenHashMap inside EntityLookup.remove during PersistentEntitySectionManager.stopTracking, preventing single-entity removal failures from crashing the server tick loop when Sable corrupts the EntityLookup internal linked-map state",
             true, Set.of("sable"), FixEntry.Side.BOTH);
         FixRegistry.register("frogport-extract-limit",
             "Prevents server freeze when FrogportBlockEntity.lazyTick pulls items from oversized adjacent inventories (hopper chains, Create warehouses): skips ItemHelper.extract when IItemHandler slot count exceeds 256, logs once per 60s",

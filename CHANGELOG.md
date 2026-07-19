@@ -2,6 +2,11 @@
 
 All notable changes to FuckSable will be documented in this file.
 
+## [1.7.3] - 2026-07-19
+
+### New Fixes
+- Add `entity-lookup-remove-guard`: catches `ArrayIndexOutOfBoundsException` thrown by `Int2ObjectLinkedOpenHashMap.fixPointers` inside `EntityLookup.remove` during `PersistentEntitySectionManager.stopTracking`, preventing single-entity removal failures from crashing the server tick loop. Root cause is Sable's SubLevel entity management corrupting the EntityLookup internal linked-map state (entry `prev`/`next` pointer set to `-1` and accessed as array index). Fix is symptomatic — suppresses the AIOOBE at the call site so the tick survives, with a WARN log per occurrence for diagnosis.
+
 ## [1.7.2] - 2026-07-19
 
 ### New Fixes
