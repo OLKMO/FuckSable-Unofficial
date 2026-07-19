@@ -2,6 +2,11 @@
 
 All notable changes to FuckSable will be documented in this file.
 
+## [1.7.2] - 2026-07-19
+
+### New Fixes
+- Add `udp-invalid-packet-guard`: silently drop UDP packets with invalid packet IDs (e.g. legacy Minecraft server list ping packet ID 254) at the head of `SableUDPPacketDecoder.decode` instead of letting Sable throw `IOException("Received an invalid packet ID: 254")`. Stops the recurring `Server UDP channel caught exception` ERROR log spam triggered by server-list-ping probes and UDP scans hitting Sable's UDP port.
+
 ## [1.7.1] - 2026-07-18
 
 ### Bug Fixes

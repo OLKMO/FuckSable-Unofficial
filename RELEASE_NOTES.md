@@ -1,3 +1,8 @@
+## v1.7.2
+
+### New Fixes
+- **`udp-invalid-packet-guard`**: silently drops UDP packets whose first byte is an invalid Sable packet ID (e.g. `254`, the legacy Minecraft server list ping packet) at the head of `SableUDPPacketDecoder.decode`. Without this guard, Sable reads the byte as a packet ID, sees it is `>= SableUDPPacketType.VALUES.length`, and throws `IOException("Received an invalid packet ID: 254")`. The exception propagates up the Netty pipeline as a `DecoderException`, gets caught by Sable's channel handler, and produces a recurring `Server UDP channel caught exception` ERROR log entry every time someone pings or scans the Sable UDP port. The fix `@Inject`s at `decode` HEAD, peeks the first byte without consuming `readerIndex`, and cancels the decode call if the ID is out of range. The valid ID upper bound is read via reflection from `SableUDPPacketType.VALUES` (cached after first call) and falls back to `5` (Sable 1.2.2 has 6 packet types) if reflection fails.
+
 ## v1.7.1
 
 ### Bug Fixes

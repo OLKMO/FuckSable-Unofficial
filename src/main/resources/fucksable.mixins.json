@@ -37,7 +37,8 @@
     "TrainDetachNullEdgeMixin",
     "SubLevelStorageLogSpamMixin",
     "FrogportItemExtractLimitMixin",
-    "CttPostTickTimeoutGuardMixin"
+    "CttPostTickTimeoutGuardMixin",
+    "SableUDPPacketDecoderMixin"
   ],
   "client": [
     "EffortlessParticleFixMixin"
