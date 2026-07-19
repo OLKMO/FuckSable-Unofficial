@@ -2,7 +2,7 @@ package dev.fucksable.mixin;
 
 import dev.fucksable.FuckSable;
 import dev.fucksable.fix.FixRegistry;
-import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.entity.EntityAccess;
 import net.minecraft.world.level.entity.EntityLookup;
 import net.minecraft.world.level.entity.PersistentEntitySectionManager;
 import org.spongepowered.asm.mixin.Mixin;
@@ -20,10 +20,6 @@ import org.spongepowered.asm.mixin.injection.Redirect;
  *     at Int2ObjectLinkedOpenHashMap.remove(Int2ObjectLinkedOpenHashMap.java:372)
  *     at EntityLookup.remove(EntityLookup.java:52)
  *     at PersistentEntitySectionManager.stopTracking(PersistentEntitySectionManager.java:157)
- *     at PersistentEntitySectionManager.lambda$updateChunkStatus$7(PersistentEntitySectionManager.java:187)
- *     at PersistentEntitySectionManager.updateChunkStatus(PersistentEntitySectionManager.java:176/162)
- *     at ChunkMap.onFullChunkStatusChange(ChunkMap.java:1275)
- *     at ChunkHolder.demoteFullChunk(ChunkHolder.java:271)
  *     ...
  *     at MinecraftServer.tickServer(MinecraftServer.java:1383)
  * <p>
@@ -34,13 +30,16 @@ import org.spongepowered.asm.mixin.injection.Redirect;
  * 遍历 chunk 内 entity 并调用 EntityLookup.remove 时，map 内部 fixPointers 访问
  * index -1 抛出 AIOOBE，传播到 MinecraftServer.tickServer 导致服务器崩溃。
  * <p>
- * 这是治标修复：捕获 remove 调用中的 AIOOBE 避免崩溃，但 map 内部状态损坏的根因
- * 需要排查 Sable 的 entity 管理逻辑（参见 sable.mixins.json:entity.entity_unloading
- * 和 sable.mixins.json:entity.server_entities_tick）。
- * <p>
  * 修复方式：
  * @Redirect 拦截 stopTracking 中的 EntityLookup.remove 调用，
  * 捕获 AIOOBE 并以 WARN 日志记录，避免单个 entity 的 remove 失败导致整个 tick 崩溃。
+ * <p>
+ * 重要：EntityLookup 是泛型类 &lt;T extends EntityAccess&gt;，stopTracking 的参数类型
+ * 也是 T。由于 Java 泛型擦除，编译后方法签名是：
+ *   EntityLookup.remove(Lnet/minecraft/world/level/entity/EntityAccess;)V
+ *   PersistentEntitySectionManager.stopTracking(Lnet/minecraft/world/level/entity/EntityAccess;)V
+ * 因此 @At 的 target 描述符必须用 EntityAccess 而不是 Entity，否则 mixin 找不到
+ * 匹配的调用点（Scanned 0 target(s)）。
  */
 @Mixin(PersistentEntitySectionManager.class)
 public class PersistentEntitySectionManagerStopTrackingGuardMixin {
@@ -48,14 +47,15 @@ public class PersistentEntitySectionManagerStopTrackingGuardMixin {
     /**
      * 拦截 EntityLookup.remove 调用，捕获内部 map 状态损坏导致的 AIOOBE。
      * <p>
+     * 参数类型必须用 EntityAccess（泛型擦除后的真实类型），不能用 Entity。
      * 被吞掉的异常会以 WARN 日志记录，便于排查但不影响服务器运行。
      */
     @Redirect(
         method = "stopTracking",
-        at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/entity/EntityLookup;remove(Lnet/minecraft/world/level/entity/Entity;)V"),
+        at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/entity/EntityLookup;remove(Lnet/minecraft/world/level/entity/EntityAccess;)V"),
         remap = false
     )
-    private void fucksable$safeEntityLookupRemove(EntityLookup instance, Entity entity) {
+    private void fucksable$safeEntityLookupRemove(EntityLookup instance, EntityAccess entity) {
         if (!FixRegistry.isEnabled("entity-lookup-remove-guard")) {
             instance.remove(entity);
             return;

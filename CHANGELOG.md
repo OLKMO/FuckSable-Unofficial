@@ -2,6 +2,11 @@
 
 All notable changes to FuckSable will be documented in this file.
 
+## [1.7.4] - 2026-07-19
+
+### Bug Fixes
+- Fix `entity-lookup-remove-guard` mixin injection failure that crashed server startup in v1.7.3 (`MixinTransformerError: Critical injection failure: Redirector fucksable$safeEntityLookupRemove ... Scanned 0 target(s)`). The `@At` target descriptor incorrectly used `Entity` as the parameter type, but `EntityLookup<T extends EntityAccess>.remove(T)` and `PersistentEntitySectionManager.stopTracking(T)` are erased to `(Lnet/minecraft/world/level/entity/EntityAccess;)V` at compile time. Now the target descriptor and handler signature use `EntityAccess`.
+
 ## [1.7.3] - 2026-07-19
 
 ### New Fixes

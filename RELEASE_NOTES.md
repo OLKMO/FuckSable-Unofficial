@@ -1,3 +1,40 @@
+## v1.7.4
+
+### 修复 / Bug Fix
+
+修复 v1.7.3 中 `entity-lookup-remove-guard` mixin 注入失败导致服务器启动崩溃的问题。
+
+Fix `entity-lookup-remove-guard` mixin injection failure that crashed server startup in v1.7.3.
+
+### 崩溃信息 / Crash
+
+```
+org.spongepowered.asm.mixin.transformer.throwables.MixinTransformerError
+Caused by: InjectionError: Critical injection failure:
+  Redirector fucksable$safeEntityLookupRemove(Lnet/minecraft/world/level/entity/EntityLookup;Lnet/minecraft/world/entity/Entity;)V
+  in fucksable.mixins.json:PersistentEntitySectionManagerStopTrackingGuardMixin
+  failed injection check, (0/1) succeeded. Scanned 0 target(s).
+```
+
+### 根因 / Root Cause
+
+`@At` 的 target 描述符错误地使用了 `Entity` 作为参数类型，但 `EntityLookup<T extends EntityAccess>` 的 `remove(T)` 和 `PersistentEntitySectionManager.stopTracking(T)` 在编译后由于泛型擦除，实际签名是 `(Lnet/minecraft/world/level/entity/EntityAccess;)V`。mixin 找不到匹配的调用点（Scanned 0 targets），导致 `MixinTransformerError` 让整个服务端启动崩溃。
+
+The `@At` target descriptor incorrectly used `Entity` as the parameter type, but `EntityLookup<T extends EntityAccess>.remove(T)` and `PersistentEntitySectionManager.stopTracking(T)` are erased to `(Lnet/minecraft/world/level/entity/EntityAccess;)V` at compile time due to Java generics erasure. Mixin could not find any matching INVOKE site (Scanned 0 targets), causing `MixinTransformerError` and crashing the server at startup.
+
+### 修复方式 / How
+
+- target 描述符改为 `(Lnet/minecraft/world/level/entity/EntityAccess;)V`
+- handler 方法参数改为 `EntityAccess`
+- Change target descriptor to `(Lnet/minecraft/world/level/entity/EntityAccess;)V`
+- Change handler parameter type to `EntityAccess`
+
+### 注意 / Note
+
+v1.7.3 是有问题的版本，请勿使用，请直接升级到 v1.7.4。
+
+v1.7.3 is broken, please skip it and use v1.7.4 instead.
+
 ## v1.7.3
 
 ### New Fix: `entity-lookup-remove-guard`
