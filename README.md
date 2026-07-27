@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="https://raw.githubusercontent.com/OLKMO/FuckSable-Unofficial/main/src/main/resources/icon.jpg" alt="FuckSable" width="128" height="128">
+  <img src="https://raw.githubusercontent.com/XSY-Team/fuck-sable/main/src/main/resources/icon.jpg" alt="FuckSable" width="128" height="128">
 </div>
 
 # F**kSable
@@ -23,7 +23,7 @@ Sable is a Minecraft mod that adds physics to blocks — a cool concept. But the
 
 **但请注意**：Alpha 也包含 Beta 版本 —— 实际上某些 Beta 反而比 Alpha 更稳定。版本号只是个标签，不代表一切。
 
-**详细信息以 [GitHub Releases](https://github.com/OLKMO/FuckSable-Unofficial/releases) 为准** —— 每个版本的发布说明都会清楚列出已知问题、适用范围和建议。不要只看版本号，**看发布说明**。
+**详细信息以 [GitHub Releases](https://github.com/XSY-Team/fuck-sable/releases) 为准** —— 每个版本的发布说明都会清楚列出已知问题、适用范围和建议。不要只看版本号，**看发布说明**。也可从 [OLKMO/FuckSable-Unofficial](https://github.com/OLKMO/FuckSable-Unofficial/releases) 获取。
 
 生产环境请优先选择经过充分测试的版本。如果你在 Alpha/Beta 版本中遇到了问题，请理解——**测试版就是测试版**，崩了别意外。
 
@@ -33,7 +33,7 @@ When you see a version marked as **Alpha** (e.g., `v1.0.0-alpha.1`), it's probab
 
 **But note**: Alpha includes Beta releases — in fact, some Betas are actually more stable than certain Alphas. Version numbers are just labels, they don't tell the whole story.
 
-**For detailed information, refer to [GitHub Releases](https://github.com/OLKMO/FuckSable-Unofficial/releases)** — each release's notes clearly list known issues, scope, and recommendations. Don't just look at the version number, **read the release notes**.
+**For detailed information, refer to [GitHub Releases](https://github.com/XSY-Team/fuck-sable/releases)** — each release's notes clearly list known issues, scope, and recommendations. Don't just look at the version number, **read the release notes**. Also available from [OLKMO/FuckSable-Unofficial](https://github.com/OLKMO/FuckSable-Unofficial/releases).
 
 For production environments, choose thoroughly tested releases. If you encounter issues in an Alpha/Beta version, please understand — **a test version is a test version**, don't be surprised if it breaks.
 
@@ -248,7 +248,13 @@ Update checking uses the **GitHub Releases API** (HTTPS) to fetch the latest ver
 
 代码已开源，欢迎提交 Issue 和 PR。
 
+- 主仓库 / Main repo: <https://github.com/XSY-Team/fuck-sable>
+- 个人仓库 / Personal repo: <https://github.com/OLKMO/FuckSable-Unofficial>
+
 The code is open source, feel free to submit Issues and PRs.
+
+- Main repo: <https://github.com/XSY-Team/fuck-sable>
+- Personal repo: <https://github.com/OLKMO/FuckSable-Unofficial>
 
 ---
 

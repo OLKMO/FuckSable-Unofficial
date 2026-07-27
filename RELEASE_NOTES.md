@@ -1,3 +1,21 @@
+## v1.7.5
+
+### 变更 / Changes
+
+代码现在开源到 [XSY-Team/fuck-sable](https://github.com/XSY-Team/fuck-sable) 组织仓库，与个人仓库 [OLKMO/FuckSable-Unofficial](https://github.com/OLKMO/FuckSable-Unofficial) 同步维护。
+
+Code is now open-sourced to the [XSY-Team/fuck-sable](https://github.com/XSY-Team/fuck-sable) org repo, maintained in sync with the personal repo [OLKMO/FuckSable-Unofficial](https://github.com/OLKMO/FuckSable-Unofficial).
+
+- **jar 产物重命名 / jar artifact renamed**: `FuckSable-Unofficial-x.x.x.jar` → `fuck-sable-x.x.x.jar`，与新仓库名一致。/ Renamed to match the new repo name.
+- **UpdateChecker 双源查询 / UpdateChecker dual-source query**: 更新检查器现在同时查询 `OLKMO/FuckSable-Unofficial` 和 `XSY-Team/fuck-sable` 两个仓库的 latest release，取版本号更高的作为更新提示。单个仓库查询失败不影响另一个。/ Update checker now queries both repos for the latest release and uses the higher version. Failure of one query does not affect the other.
+- **README 链接调整 / README link updates**: README 中的图片 URL 和 Releases 链接主链接改为 `XSY-Team/fuck-sable`，同时保留 `OLKMO/FuckSable-Unofficial` 作为备用下载源。/ README links now point to `XSY-Team/fuck-sable` as main, with `OLKMO/FuckSable-Unofficial` as backup.
+
+### 注意 / Note
+
+v1.7.5 同时在 `XSY-Team/fuck-sable` 和 `OLKMO/FuckSable-Unofficial` 两个仓库发布，内容一致。
+
+v1.7.5 is released on both `XSY-Team/fuck-sable` and `OLKMO/FuckSable-Unofficial` repos with identical content.
+
 ## v1.7.4
 
 ### 修复 / Bug Fix
