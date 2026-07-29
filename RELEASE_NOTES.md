@@ -1,3 +1,26 @@
+## v1.7.6
+
+### c2me 兼容性修复 / c2me Compatibility Fix
+
+修复 fucksable 的 `async-save` 修复项与 c2me 的 `preventAsyncEntityUnload` mixin 冲突问题。
+
+Fixed conflict between fucksable's `async-save` fix and c2me's `preventAsyncEntityUnload` mixin.
+
+**问题 / Issue**: fucksable 把 `SubLevelHoldingChunkMap.saveAll` 整体放到异步 IO 线程执行，异步线程执行 `processUnloads` → `removeSubLevel` → `removeEntity` 时，c2me 检测到异步线程调用 `ChunkMap.removeEntity` 并抛出 `ConcurrentModificationException: Async entity unload`，导致 sub-level 保存流程中断。
+
+fucksable ran `saveAll` entirely on async IO thread; when the async thread called `processUnloads` → `removeSubLevel` → `removeEntity`, c2me detected async `ChunkMap.removeEntity` call and threw `ConcurrentModificationException: Async entity unload`, interrupting the sub-level save flow.
+
+**修复 / Fix**: 检测 c2me 存在时，`saveAll` 在主线程执行（unload 部分不触发 c2me 冲突），但磁盘 IO（`attemptSaveSubLevel`、`attemptSaveHoldingChunk`）提交到异步 IO 线程执行，`saveAll` 返回前等待所有异步磁盘 IO 完成。
+
+When c2me is present, `saveAll` runs on main thread (unload does not trigger c2me conflict), but disk IO (`attemptSaveSubLevel`, `attemptSaveHoldingChunk`) is submitted to async IO thread; `saveAll` waits for all async disk IO to complete before returning.
+
+### 兼容性 / Compatibility
+
+- Sable 1.x 和 2.x / Sable 1.x and 2.x
+- NeoForge 1.21.1
+- Mohist/Youer 混合服务端 / Mohist/Youer hybrid servers
+- c2me（Concurrent Chunk Management Engine）兼容 / c2me compatible
+
 ## v1.7.5
 
 ### 变更 / Changes
