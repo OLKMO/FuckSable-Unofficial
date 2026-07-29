@@ -59,7 +59,7 @@ public final class FuckSableConfig {
             obj.addProperty("autoUpdate", autoUpdate);
             JsonObject fixesObj = new JsonObject();
             for (FixEntry entry : FixRegistry.getAllFixes()) {
-                fixesObj.addProperty(entry.getId(), entry.isEnabled());
+                fixesObj.addProperty(entry.getId(), entry.isExplicitlyEnabled());
             }
             obj.add("fixes", fixesObj);
             Files.writeString(configPath, GSON.toJson(obj));
@@ -71,4 +71,5 @@ public final class FuckSableConfig {
     public String getLanguage() { return language; }
     public boolean isAutoUpdate() { return autoUpdate; }
     public Map<String, Boolean> getFixStates() { return fixes; }
+    public boolean existedOnDisk() { return existedOnDisk; }
 }

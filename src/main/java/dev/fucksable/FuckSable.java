@@ -22,7 +22,7 @@ import java.util.Set;
 @Mod(FuckSable.MOD_ID)
 public class FuckSable {
     public static final String MOD_ID = "fucksable";
-    public static final String VERSION = "1.7.6";
+    public static final String VERSION = "1.7.7";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
     private static FuckSableConfig config;
@@ -138,6 +138,11 @@ public class FuckSable {
             "Fixes Vista camera chunk loading incompatibility with Sable physics structures: projects ViewFinder SubLevel coordinates to world coordinates before force-loading chunks, preventing TPS drop and infinite loading loops",
             true, Set.of("vista", "sable"), FixEntry.Side.BOTH);
 
+        // === ScalableLux 兼容修复 ===
+        FixRegistry.register("scalablelux-compat",
+            "Fixes Sable SubLevel lighting being completely disabled when ScalableLux is installed: ScalableLux clears the vanilla blockEngine/skyEngine fields of the main world light engine, causing Sable to misjudge SubLevel as having no block light and no sky light",
+            true, Set.of("scalablelux", "sable"), FixEntry.Side.BOTH);
+
         // === 物理引擎修复 ===
         FixRegistry.register("constraint-self-fix",
             "Suppresses self-constraint errors in Sable physics pipeline: when a constraint is added between a SubLevel and itself, returns null instead of throwing IllegalArgumentException, preventing log spam",
@@ -163,6 +168,11 @@ public class FuckSable {
             if (state != null) {
                 entry.setEnabled(state);
             }
+        }
+
+        // 6.5 如果配置文件不存在（首次启动或被删除），立即重新生成
+        if (!config.existedOnDisk()) {
+            config.save(configDir);
         }
 
         // 7. 自动更新检查

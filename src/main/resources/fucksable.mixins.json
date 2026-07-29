@@ -39,7 +39,9 @@
     "FrogportItemExtractLimitMixin",
     "CttPostTickTimeoutGuardMixin",
     "SableUDPPacketDecoderMixin",
-    "PersistentEntitySectionManagerStopTrackingGuardMixin"
+    "PersistentEntitySectionManagerStopTrackingGuardMixin",
+    "RigidBodyHandleMixin",
+    "ScalableLuxCompatMixin"
   ],
   "client": [
     "EffortlessParticleFixMixin"

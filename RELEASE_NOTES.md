@@ -1,3 +1,39 @@
+## v1.7.7
+
+### ScalableLux 兼容性修复 / ScalableLux Compatibility Fix
+
+修复 ScalableLux 与 Sable 的光照引擎不兼容问题（Issue #8）。此前 ScalableLux 与 Sable 同时安装时，SubLevel 光照完全失效，导致 C2ME OCL 和 Sable 大部分不兼容。
+
+Fixed ScalableLux incompatibility with Sable's light engine (Issue #8). Previously, when ScalableLux and Sable were installed together, SubLevel lighting was completely disabled, making C2ME OCL and Sable largely incompatible.
+
+**问题 / Issue**: Sable 的 `ServerLevelPlot` 构造函数从主世界 `LevelLightEngine` 读取 `blockEngine`/`skyEngine` 字段判断 SubLevel 是否有方块光/天空光。ScalableLux 的 `LevelLightEngineMixin.construct` 清空了这两个字段（用 `StarLightInterface` 替代 vanilla 光照引擎），导致 Sable 误判 SubLevel 无方块光、无天空光，SubLevel 光照完全失效。
+
+Sable's `ServerLevelPlot` constructor reads the `blockEngine`/`skyEngine` fields of the main world `LevelLightEngine` to determine if the SubLevel has block light / sky light. ScalableLux's `LevelLightEngineMixin.construct` clears these fields (replacing vanilla light engine with `StarLightInterface`), causing Sable to misjudge SubLevel as having no block light and no sky light, completely disabling SubLevel lighting.
+
+**修复 / Fix**: 新增 `scalablelux-compat` 修复项，拦截 `ServerLevelPlot` 构造函数中 `new LevelLightEngine(...)` 调用，当 ScalableLux 存在时通过 `StarLightInterface.hasBlockLight()/hasSkyLight()` 重新计算正确的光照参数。
+
+Added `scalablelux-compat` fix: intercepts `new LevelLightEngine(...)` in `ServerLevelPlot` constructor; when ScalableLux is present, recalculates correct light parameters via `StarLightInterface.hasBlockLight()/hasSkyLight()`.
+
+### 物理结构崩溃修复 / Physics Structure Crash Fix
+
+修复 simulated mod 的 `EndSeaPhysics.physicsTick` 调用 `RigidBodyHandle.getLinearVelocity` 访问已移除的 rapier native body 导致 `RuntimeException: Body has been removed` 崩溃。新增 `RigidBodyHandleMixin`，拦截 `getLinearVelocity` 和 `getAngularVelocity` 方法，try-catch 捕获 `RuntimeException` 并返回零向量，复用 `panic-guard` 修复项开关。
+
+Fixed `RuntimeException: Body has been removed` crash when simulated mod's `EndSeaPhysics.physicsTick` calls `RigidBodyHandle.getLinearVelocity` on a removed rapier native body. Added `RigidBodyHandleMixin`: intercepts `getLinearVelocity` and `getAngularVelocity`, catches `RuntimeException` and returns zero vector, reuses the `panic-guard` fix toggle.
+
+### 配置文件修复 / Config File Fix
+
+修复配置文件不存在时未重新生成的问题，以及执行命令修改配置后未立即保存的问题。
+
+Fixed config not regenerating when missing, and config not saving immediately after command modification.
+
+### 兼容性 / Compatibility
+
+- Sable 1.x 和 2.x / Sable 1.x and 2.x
+- NeoForge 1.21.1
+- Mohist/Youer 混合服务端 / Mohist/Youer hybrid servers
+- ScalableLux（光照优化）兼容 / ScalableLux (lighting optimization) compatible
+- c2me 兼容 / c2me compatible
+
 ## v1.7.6
 
 ### c2me 兼容性修复 / c2me Compatibility Fix

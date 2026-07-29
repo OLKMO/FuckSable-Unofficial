@@ -145,7 +145,30 @@ public class FuckSableMixinConfigPlugin implements IMixinConfigPlugin {
             if (state == 0) return false;
             return state == 2;
         }
+        // ScalableLuxCompatMixin 引用了 ScalableLux 的类，只在 ScalableLux 加载时才应用，
+        // 避免 ScalableLux 不存在时类加载失败。
+        if (mixinClassName.endsWith("ScalableLuxCompatMixin")) {
+            return isModLoaded("scalablelux");
+        }
         return true;
+    }
+
+    /**
+     * 通过反射检测指定 mod 是否已加载。
+     * 在 mixin prepare 阶段调用 FMLLoader API 是安全的（FMLLoader 不是 mixin 目标）。
+     */
+    private static boolean isModLoaded(String modId) {
+        try {
+            Class<?> fmlLoaderClass = Class.forName("net.neoforged.fml.loading.FMLLoader");
+            Method getLoadingModList = fmlLoaderClass.getMethod("getLoadingModList");
+            Object modList = getLoadingModList.invoke(null);
+            Method getModFileById = modList.getClass().getMethod("getModFileById", String.class);
+            Object modFile = getModFileById.invoke(modList, modId);
+            return modFile != null;
+        } catch (Throwable t) {
+            FuckSable.LOGGER.debug("Failed to detect mod '{}' during mixin prepare, skipping related mixin", modId, t);
+            return false;
+        }
     }
 
     @Override

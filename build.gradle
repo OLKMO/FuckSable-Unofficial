@@ -60,6 +60,8 @@ dependencies {
     // Create Aeronautics / Simulated 依赖（用于 SlimeBearingFix 和 PhysicsStaffDragClipFix）
     compileOnly files("libs/simulated-neoforge-1.21.1-1.2.1.jar")
     compileOnly files("libs/create-aeronautics-bundled-1.21.1-1.2.1.jar")
+    // ScalableLux 依赖（用于 ScalableLuxCompatMixin，运行时可选）
+    compileOnly files("libs/scalablelux.jar")
 }
 
 // 配置资源处理
