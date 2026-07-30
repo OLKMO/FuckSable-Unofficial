@@ -1,3 +1,27 @@
+## v1.7.8
+
+### ScalableLux 兼容性 mixin 注入失败修复 / ScalableLux Compat Mixin Injection Failure Fix
+
+修复 v1.7.7 中 `ScalableLuxCompatMixin` 因缺少 `remap = false` 注解导致 NeoForge 启动时 mixin 注入失败崩溃的问题（Issue #10）。
+
+Fixed crash on startup caused by `ScalableLuxCompatMixin` missing `remap = false` annotation in v1.7.7, which made mixin injection fail on NeoForge (Issue #10).
+
+**问题 / Issue**: NeoForge moddev 不生成 refmap，`@At("NEW")` target `new LevelLightEngine(...)` 无法解析，触发 `MixinTransformerError: Critical injection failure: Redirector fucksable$fixLightEngineInit ... Scanned 0 target(s). No refMap loaded`，服务端启动崩溃。
+
+NeoForge moddev does not generate refmap; the `@At("NEW")` target `new LevelLightEngine(...)` could not be resolved, triggering `MixinTransformerError: Critical injection failure: Redirector fucksable$fixLightEngineInit ... Scanned 0 target(s). No refMap loaded` and crashing server startup.
+
+**修复 / Fix**: 在 `@Mixin`、`@At`、`@Redirect` 注解均添加 `remap = false`，并将 `@Mixin(ServerLevelPlot.class)` 改为 `@Mixin(targets = "dev.ryanhcode.sable.sublevel.plot.ServerLevelPlot", remap = false)`。
+
+Added `remap = false` to `@Mixin`, `@At`, and `@Redirect` annotations, and changed `@Mixin(ServerLevelPlot.class)` to `@Mixin(targets = "dev.ryanhcode.sable.sublevel.plot.ServerLevelPlot", remap = false)`.
+
+### 兼容性 / Compatibility
+
+- Sable 1.x 和 2.x / Sable 1.x and 2.x
+- NeoForge 1.21.1
+- Mohist/Youer 混合服务端 / Mohist/Youer hybrid servers
+- ScalableLux（光照优化）兼容 / ScalableLux (lighting optimization) compatible
+- c2me 兼容 / c2me compatible
+
 ## v1.7.7
 
 ### ScalableLux 兼容性修复 / ScalableLux Compatibility Fix

@@ -4,7 +4,6 @@ import ca.spottedleaf.starlight.common.light.StarLightInterface;
 import ca.spottedleaf.starlight.common.light.StarLightLightingProvider;
 import dev.fucksable.FuckSable;
 import dev.fucksable.fix.FixRegistry;
-import dev.ryanhcode.sable.sublevel.plot.ServerLevelPlot;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.LightChunkGetter;
 import net.minecraft.world.level.lighting.LevelLightEngine;
@@ -33,15 +32,17 @@ import org.spongepowered.asm.mixin.injection.Redirect;
  * 当 ScalableLux 存在时，通过 StarLightInterface.hasBlockLight()/hasSkyLight()
  * 重新计算正确的 hasBlockLight/hasSkyLight 参数，确保 SubLevel 光照正常初始化。
  */
-@Mixin(ServerLevelPlot.class)
+@Mixin(targets = "dev.ryanhcode.sable.sublevel.plot.ServerLevelPlot", remap = false)
 public abstract class ScalableLuxCompatMixin {
 
     @Redirect(
         method = "<init>",
         at = @At(
             value = "NEW",
-            target = "Lnet/minecraft/world/level/lighting/LevelLightEngine;<init>(Lnet/minecraft/world/level/chunk/LightChunkGetter;ZZ)V"
-        )
+            target = "Lnet/minecraft/world/level/lighting/LevelLightEngine;<init>(Lnet/minecraft/world/level/chunk/LightChunkGetter;ZZ)V",
+            remap = false
+        ),
+        remap = false
     )
     private LevelLightEngine fucksable$fixLightEngineInit(
         LightChunkGetter chunkGetter, boolean hasBlockLight, boolean hasSkyLight

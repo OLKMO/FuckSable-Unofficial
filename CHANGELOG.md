@@ -2,6 +2,14 @@
 
 All notable changes to FuckSable will be documented in this file.
 
+## [1.7.8] - 2026-07-31
+
+### Bug 修复 / Bug Fixes
+
+- **ScalableLux 兼容性 mixin 注入失败修复 / ScalableLux compat mixin injection failure fix**: 修复 v1.7.7 中 `ScalableLuxCompatMixin` 因缺少 `remap = false` 注解导致 NeoForge 启动时 mixin 注入失败崩溃的问题（Issue #10）。/ Fixed crash on startup caused by `ScalableLuxCompatMixin` missing `remap = false` annotation in v1.7.7, which made mixin injection fail on NeoForge (Issue #10).
+  - **问题 / Issue**: NeoForge moddev 不生成 refmap，`@At("NEW")` target `new LevelLightEngine(...)` 无法解析，触发 `MixinTransformerError: Critical injection failure: Redirector fucksable$fixLightEngineInit ... Scanned 0 target(s). No refMap loaded`，服务端启动崩溃。/ NeoForge moddev does not generate refmap; the `@At("NEW")` target `new LevelLightEngine(...)` could not be resolved, triggering `MixinTransformerError: Critical injection failure: Redirector fucksable$fixLightEngineInit ... Scanned 0 target(s). No refMap loaded` and crashing server startup.
+  - **修复 / Fix**: 在 `@Mixin`、`@At`、`@Redirect` 注解均添加 `remap = false`，并将 `@Mixin(ServerLevelPlot.class)` 改为 `@Mixin(targets = "dev.ryanhcode.sable.sublevel.plot.ServerLevelPlot", remap = false)`，与项目其他 mixin 保持一致。/ Added `remap = false` to `@Mixin`, `@At`, and `@Redirect` annotations, and changed `@Mixin(ServerLevelPlot.class)` to `@Mixin(targets = "dev.ryanhcode.sable.sublevel.plot.ServerLevelPlot", remap = false)`, consistent with other mixins in the project.
+
 ## [1.7.7] - 2026-07-30
 
 ### 变更 / Changes
