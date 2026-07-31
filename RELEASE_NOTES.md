@@ -1,6 +1,6 @@
 ## v1.7.9
 
-### ScalableLux 兼容性 mixin @At("NEW") target 格式修复 / ScalableLux Compat Mixin @At("NEW") Target Format Fix
+### ScalableLux 兼容性 mixin `@At("NEW")` target 格式修复 / ScalableLux Compat Mixin `@At("NEW")` Target Format Fix
 
 修复 v1.7.8 中 `ScalableLuxCompatMixin` 的 `@At("NEW")` target 使用了错误的方法描述符格式，导致 mixin 扫描 0 个目标，服务端启动崩溃（Issue #13）。
 
