@@ -36,6 +36,11 @@ public abstract class RapierPhysicsPipelineMixin {
     private static final Set<String> fucksable$selfConstraintWarned = ConcurrentHashMap.newKeySet();
 
     @Unique
+    private static final long FUCKSABLE$TELEPORT_WARN_INTERVAL_NS = 60_000_000_000L; // 60s
+    @Unique
+    private static volatile long fucksable$lastTeleportWarnTime = 0L;
+
+    @Unique
     private boolean fucksable$isBodyValid(PhysicsPipelineBody body) {
         if (body == null) {
             return false;
@@ -137,8 +142,13 @@ public abstract class RapierPhysicsPipelineMixin {
     private void fucksable$safeTeleport(PhysicsPipelineBody body, Vector3dc position, Quaterniondc orientation, CallbackInfo ci) {
         if (!this.fucksable$isPanicGuardEnabled()) return;
         if (!this.fucksable$isBodyValid(body)) {
-            FuckSable.LOGGER.warn("Attempted to teleport invalid/removed body (id={}), skipping",
-                body != null ? Rapier3D.getID(body) : "null");
+            long now = System.nanoTime();
+            long last = fucksable$lastTeleportWarnTime;
+            if (now - last > FUCKSABLE$TELEPORT_WARN_INTERVAL_NS) {
+                fucksable$lastTeleportWarnTime = now;
+                FuckSable.LOGGER.warn("Attempted to teleport invalid/removed body (id={}), skipping. This warning is throttled to once per 60s.",
+                    body != null ? Rapier3D.getID(body) : "null");
+            }
             ci.cancel();
         }
     }

@@ -1,3 +1,69 @@
+## v1.7.10
+
+### ScalableLux 不兼容声明绕过 / ScalableLux Incompatibility Declaration Bypass
+
+使用 NeoForge 官方的 `fml.toml` 依赖覆盖（`[dependencyOverrides]`）机制，绕过 Sable 对 ScalableLux 的 `type = "incompatible"` 声明，避免 NeoForge ModSorter 在启动阶段直接拒绝加载。fs 启动时自动检查并写入 `fml.toml`，无需用户手动配置。
+
+Uses NeoForge's official `fml.toml` dependency override (`[dependencyOverrides]`) mechanism to bypass Sable's `type = "incompatible"` declaration against ScalableLux, preventing NeoForge ModSorter from aborting startup. fs automatically checks and writes `fml.toml` on startup, no manual configuration required.
+
+**如何让 NeoForge 忽略 Sable 对 ScalableLux 的不兼容检查 / How to make NeoForge ignore Sable's incompatibility with ScalableLux**:
+
+fs 启动时会自动在 `<游戏目录>/config/fml.toml` 写入以下配置（若不存在）：
+
+fs automatically writes the following to `<game_dir>/config/fml.toml` on startup (if not present):
+
+```toml
+[dependencyOverrides]
+sable = ["-scalablelux"]
+```
+
+如果你想手动配置，在 `config/fml.toml` 末尾添加上述两行即可。`-scalablelux` 表示移除 Sable 对 ScalableLux 的所有依赖约束（包括 INCOMPATIBLE 声明）。
+
+To configure manually, add the above two lines to the end of `config/fml.toml`. `-scalablelux` removes all dependency constraints from Sable against ScalableLux (including the INCOMPATIBLE declaration).
+
+**注意 / Note**: 如果 fs 和 ScalableLux 同时首次安装，fs 没有机会执行自动写入（游戏在 ModSorter 阶段就崩溃）。此时请先单独启动一次 fs，再安装 ScalableLux。/ If fs and ScalableLux are installed simultaneously for the first time, fs has no chance to auto-write (game crashes at ModSorter stage). In this case, launch the game with fs alone first, then install ScalableLux.
+
+### ScalableLux 兼容性修复项 / ScalableLux Compatibility Fixes
+
+fs 提供两个与 ScalableLux 相关的修复项：
+
+fs provides two ScalableLux-related fixes:
+
+1. **`sable-scalablelux-incompat-bypass`**（默认不启用 / disabled by default）: 绕过 Sable 的 `neoforge.mods.toml` 中对 ScalableLux 的 `type = "incompatible"` 声明，防止 NeoForge ModSorter 在启动阶段报 `Mod sable is incompatible with scalablelux` 并拒绝启动。fs 启动时自动写入 `fml.toml` 的 `[dependencyOverrides]` 配置。/ Bypasses Sable's `type = "incompatible"` declaration against ScalableLux, preventing NeoForge ModSorter from aborting startup with `Mod sable is incompatible with scalablelux`. fs automatically writes the `[dependencyOverrides]` config to `fml.toml` on startup.
+
+2. **`scalablelux-compat`**（默认启用 / enabled by default）: 修复 ScalableLux 存在时 Sable SubLevel 光照完全失效的问题。ScalableLux 清空了主世界 `LevelLightEngine` 的 `blockEngine`/`skyEngine` 字段，导致 Sable 误判 SubLevel 无方块光、无天空光。本修复拦截 `ServerLevelPlot` 构造函数中的 `new LevelLightEngine(...)` 调用，通过 `StarLightInterface.hasBlockLight()/hasSkyLight()` 重新计算正确的光照参数。/ Fixes Sable SubLevel lighting being completely disabled when ScalableLux is installed. ScalableLux clears the `blockEngine`/`skyEngine` fields of the main world `LevelLightEngine`, causing Sable to misjudge SubLevel as having no block light and no sky light. This fix intercepts `new LevelLightEngine(...)` in `ServerLevelPlot` constructor and recalculates correct light parameters via `StarLightInterface.hasBlockLight()/hasSkyLight()`.
+
+**前置依赖关系 / Prerequisite dependency**:
+
+`scalablelux-compat` 依赖 `sable-scalablelux-incompat-bypass`。如果 `scalablelux-compat` 启用但 `sable-scalablelux-incompat-bypass` 未启用，fs 会在日志中输出警告，提醒用户先启用 `sable-scalablelux-incompat-bypass` 并重启服务器。
+
+`scalablelux-compat` depends on `sable-scalablelux-incompat-bypass`. If `scalablelux-compat` is enabled but `sable-scalablelux-incompat-bypass` is not, fs will log a warning reminding the user to enable `sable-scalablelux-incompat-bypass` and restart the server.
+
+**使用步骤 / Usage steps**:
+
+1. 在配置中启用 `sable-scalablelux-incompat-bypass`，重启服务器（fs 会自动写入 `fml.toml` 的依赖覆盖配置）/ Enable `sable-scalablelux-incompat-bypass` in config, restart server (fs will auto-write the `fml.toml` dependency override)
+2. 确认 ScalableLux 正常加载后，`scalablelux-compat` 会自动生效（默认已启用）/ After confirming ScalableLux loads correctly, `scalablelux-compat` will work automatically (enabled by default)
+
+### ScalableLux 兼容性 mixin 注入修复 / ScalableLux Compat Mixin Injection Fix
+
+修复 `ScalableLuxCompatMixin` 的 `@At("NEW")` target 格式不正确导致 mixin 扫描 0 个目标，simulated mod 加载时崩溃。将 target 从 `new <类名>(<描述符>)V` 改为纯类名。
+
+Fixed `ScalableLuxCompatMixin` `@At("NEW")` target format causing mixin to scan 0 targets and crash when simulated mod loads. Changed target from `new <class>(<descriptor>)V` to plain class name.
+
+### 控制台刷屏修复 / Console Log Spam Fix
+
+修复无物理结构时 `Attempted to teleport invalid/removed body (id=0), skipping` 警告每 tick 刷屏的问题，警告改为 60 秒节流窗口。
+
+Fixed `Attempted to teleport invalid/removed body (id=0), skipping` warning spamming console every tick when no physics structures exist. Warning now throttled to once per 60s window.
+
+### 兼容性 / Compatibility
+
+- Sable 1.x 和 2.x / Sable 1.x and 2.x
+- NeoForge 1.21.1
+- Mohist/Youer 混合服务端 / Mohist/Youer hybrid servers
+- ScalableLux（光照优化）兼容 / ScalableLux (lighting optimization) compatible
+- c2me 兼容 / c2me compatible
+
 ## v1.7.9
 
 ### ScalableLux 兼容性 mixin `@At("NEW")` target 格式修复 / ScalableLux Compat Mixin `@At("NEW")` Target Format Fix

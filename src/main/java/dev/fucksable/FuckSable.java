@@ -16,13 +16,17 @@ import net.neoforged.neoforge.event.server.ServerStoppingEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 @Mod(FuckSable.MOD_ID)
 public class FuckSable {
     public static final String MOD_ID = "fucksable";
-    public static final String VERSION = "1.7.9";
+    public static final String VERSION = "1.7.10";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
     private static FuckSableConfig config;
@@ -139,8 +143,11 @@ public class FuckSable {
             true, Set.of("vista", "sable"), FixEntry.Side.BOTH);
 
         // === ScalableLux 兼容修复 ===
+        FixRegistry.register("sable-scalablelux-incompat-bypass",
+            "Bypasses Sable's hardcoded incompatible-with-ScalableLux declaration via NeoForge's dependency override mechanism: writes 'dependencyOverrides.sable = [\"-scalablelux\"]' to config/fml.toml on startup. This is a prerequisite for 'scalablelux-compat'. Enable this first, then restart, before enabling scalablelux-compat.",
+            false, Set.of("sable"), FixEntry.Side.BOTH);
         FixRegistry.register("scalablelux-compat",
-            "Fixes Sable SubLevel lighting being completely disabled when ScalableLux is installed: ScalableLux clears the vanilla blockEngine/skyEngine fields of the main world light engine, causing Sable to misjudge SubLevel as having no block light and no sky light",
+            "Fixes Sable SubLevel lighting being completely disabled when ScalableLux is installed: ScalableLux clears the vanilla blockEngine/skyEngine fields of the main world light engine, causing Sable to misjudge SubLevel as having no block light and no sky light. Requires 'sable-scalablelux-incompat-bypass' to be enabled first.",
             true, Set.of("scalablelux", "sable"), FixEntry.Side.BOTH);
 
         // === 物理引擎修复 ===
@@ -173,6 +180,11 @@ public class FuckSable {
         // 6.5 如果配置文件不存在（首次启动或被删除），立即重新生成
         if (!config.existedOnDisk()) {
             config.save(configDir);
+        }
+
+        // 6.6 自动添加 ScalableLux 依赖覆盖到 fml.toml
+        if (FixRegistry.isEnabled("sable-scalablelux-incompat-bypass")) {
+            ensureScalableLuxDependencyOverride(configDir);
         }
 
         // 7. 自动更新检查
@@ -233,6 +245,60 @@ public class FuckSable {
 
     private void onServerStopping(ServerStoppingEvent event) {
         config.save(FMLPaths.CONFIGDIR.get());
+    }
+
+    /**
+     * 自动检查 fml.toml 是否已有 ScalableLux 依赖覆盖，如果没有则添加。
+     * <p>
+     * NeoForge 在 ModSorter 阶段检查不兼容声明，时机早于 fs 构造器。
+     * 因此 fs 无法在第一次同时安装 ScalableLux 时自动绕过——用户需要先安装 fs 并启动一次，
+     * fs 会自动写入依赖覆盖，之后安装 ScalableLux 即可正常启动。
+     */
+    private static void ensureScalableLuxDependencyOverride(Path configDir) {
+        try {
+            Path fmlTomlPath = configDir.resolve("fml.toml");
+            if (!Files.exists(fmlTomlPath)) {
+                return; // fml.toml 不存在，让 NeoForge 自己创建
+            }
+
+            List<String> lines = new ArrayList<>(Files.readAllLines(fmlTomlPath, StandardCharsets.UTF_8));
+
+            // 已有 scalablelux 相关的依赖覆盖，不需要添加
+            for (String line : lines) {
+                if (line.contains("scalablelux")) {
+                    return;
+                }
+            }
+
+            // 移除空的 dependencyOverrides = {} 行（NeoForge 默认值）
+            lines.removeIf(line -> line.trim().equals("dependencyOverrides = {}"));
+
+            // 检查是否已有 [dependencyOverrides] 节
+            int sectionIndex = -1;
+            for (int i = 0; i < lines.size(); i++) {
+                if (lines.get(i).trim().equals("[dependencyOverrides]")) {
+                    sectionIndex = i;
+                    break;
+                }
+            }
+
+            if (sectionIndex >= 0) {
+                // 在 [dependencyOverrides] 行后面添加 sable 行
+                lines.add(sectionIndex + 1, "sable = [\"-scalablelux\"]");
+            } else {
+                // 文件末尾添加整个节
+                if (!lines.isEmpty() && !lines.get(lines.size() - 1).trim().isEmpty()) {
+                    lines.add(""); // 空行分隔
+                }
+                lines.add("[dependencyOverrides]");
+                lines.add("sable = [\"-scalablelux\"]");
+            }
+
+            Files.write(fmlTomlPath, lines, StandardCharsets.UTF_8);
+            LOGGER.info("Added ScalableLux dependency override to fml.toml (sable-scalablelux-incompat-bypass). Restart the game for the change to take effect.");
+        } catch (Exception e) {
+            LOGGER.warn("Failed to add ScalableLux dependency override to fml.toml", e);
+        }
     }
 
     public static void saveConfig() {

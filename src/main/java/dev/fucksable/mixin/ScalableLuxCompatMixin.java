@@ -39,7 +39,7 @@ public abstract class ScalableLuxCompatMixin {
         method = "<init>",
         at = @At(
             value = "NEW",
-            target = "new net/minecraft/world/level/lighting/LevelLightEngine(Lnet/minecraft/world/level/chunk/LightChunkGetter;ZZ)V",
+            target = "net/minecraft/world/level/lighting/LevelLightEngine",
             remap = false
         ),
         remap = false
@@ -47,21 +47,30 @@ public abstract class ScalableLuxCompatMixin {
     private LevelLightEngine fucksable$fixLightEngineInit(
         LightChunkGetter chunkGetter, boolean hasBlockLight, boolean hasSkyLight
     ) {
-        if (FixRegistry.isEnabled("scalablelux-compat") && chunkGetter instanceof Level level) {
-            LevelLightEngine worldEngine = level.getLightEngine();
-            if (worldEngine instanceof StarLightLightingProvider provider) {
-                StarLightInterface starLight = provider.scalablelux$getLightEngine();
-                if (starLight != null) {
-                    boolean realHasBlock = starLight.hasBlockLight();
-                    boolean realHasSky = starLight.hasSkyLight();
-                    if (realHasBlock != hasBlockLight || realHasSky != hasSkyLight) {
-                        FuckSable.LOGGER.info(
-                            "ScalableLux compat: corrected SubLevel light engine flags (block: {}->{}, sky: {}->{})",
-                            hasBlockLight, realHasBlock, hasSkyLight, realHasSky
-                        );
+        if (FixRegistry.isEnabled("scalablelux-compat")) {
+            if (!FixRegistry.isEnabled("sable-scalablelux-incompat-bypass")) {
+                FuckSable.LOGGER.warn(
+                    "scalablelux-compat is enabled but its prerequisite 'sable-scalablelux-incompat-bypass' is disabled. " +
+                    "Enable 'sable-scalablelux-incompat-bypass' and restart the server for ScalableLux compatibility to work."
+                );
+                return new LevelLightEngine(chunkGetter, hasBlockLight, hasSkyLight);
+            }
+            if (chunkGetter instanceof Level level) {
+                LevelLightEngine worldEngine = level.getLightEngine();
+                if (worldEngine instanceof StarLightLightingProvider provider) {
+                    StarLightInterface starLight = provider.scalablelux$getLightEngine();
+                    if (starLight != null) {
+                        boolean realHasBlock = starLight.hasBlockLight();
+                        boolean realHasSky = starLight.hasSkyLight();
+                        if (realHasBlock != hasBlockLight || realHasSky != hasSkyLight) {
+                            FuckSable.LOGGER.info(
+                                "ScalableLux compat: corrected SubLevel light engine flags (block: {}->{}, sky: {}->{})",
+                                hasBlockLight, realHasBlock, hasSkyLight, realHasSky
+                            );
+                        }
+                        hasBlockLight = realHasBlock;
+                        hasSkyLight = realHasSky;
                     }
-                    hasBlockLight = realHasBlock;
-                    hasSkyLight = realHasSky;
                 }
             }
         }

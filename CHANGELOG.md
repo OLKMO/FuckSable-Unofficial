@@ -2,6 +2,20 @@
 
 All notable changes to FuckSable will be documented in this file.
 
+## [1.7.10] - 2026-07-31
+
+### 变更 / Changes
+
+- **ScalableLux 不兼容声明绕过 / ScalableLux incompatibility declaration bypass**: 使用 NeoForge 官方的 `fml.toml` 依赖覆盖（`[dependencyOverrides]`）机制，绕过 Sable 的 `neoforge.mods.toml` 中对 ScalableLux 的 `type = "incompatible"` 声明，避免 NeoForge ModSorter 在启动阶段直接拒绝加载。/ Uses NeoForge's official `fml.toml` dependency override (`[dependencyOverrides]`) mechanism to bypass Sable's `type = "incompatible"` declaration against ScalableLux in `neoforge.mods.toml`, preventing NeoForge ModSorter from aborting startup.
+  - fs 启动时自动检查并写入 `fml.toml`，无需用户手动配置。/ fs automatically checks and writes `fml.toml` on startup, no manual configuration required.
+  - 替代了 v1.7.9 中复杂且易出问题的 CoreMod 方案。/ Replaces the complex and error-prone CoreMod approach from v1.7.9.
+
+- **ScalableLux 兼容性 mixin 注入修复 / ScalableLux compat mixin injection fix**: 修复 `ScalableLuxCompatMixin` 的 `@At("NEW")` target 格式不正确导致 mixin 扫描 0 个目标，simulated mod 加载时崩溃（`Scanned 0 target(s)`）。/ Fixed `ScalableLuxCompatMixin` `@At("NEW")` target format causing mixin to scan 0 targets and crash when simulated mod loads (`Scanned 0 target(s)`).
+  - 将 target 从 `new <类名>(<描述符>)V` 改为纯类名 `net/minecraft/world/level/lighting/LevelLightEngine`。/ Changed target from `new <class>(<descriptor>)V` to plain class name `net/minecraft/world/level/lighting/LevelLightEngine`.
+
+- **控制台刷屏修复 / Console log spam fix**: 修复无物理结构时 `Attempted to teleport invalid/removed body (id=0), skipping` 警告每 tick 刷屏的问题。/ Fixed `Attempted to teleport invalid/removed body (id=0), skipping` warning spamming console every tick when no physics structures exist.
+  - 警告改为 60 秒节流窗口，窗口内只输出一次。/ Warning now throttled to once per 60s window.
+
 ## [1.7.9] - 2026-07-31
 
 ### Bug 修复 / Bug Fixes

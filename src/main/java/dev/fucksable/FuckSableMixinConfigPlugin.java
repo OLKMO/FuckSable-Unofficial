@@ -10,6 +10,7 @@ import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 
 import java.io.InputStream;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -21,12 +22,21 @@ import java.util.Set;
  * 避免 Mixin 描述符不匹配导致 apply 阶段崩溃。
  * <p>
  * 使用纯反射访问 NeoForge 加载期 API，避免编译期对具体 forgespi 包的依赖。
+ * <p>
+ * ScalableLux 不兼容声明的绕过已迁移到 CoreMod（见 META-INF/coremods.json），
+ * 因为 MixinConfigPlugin.onLoad 的执行时机晚于 ModSorter 的不兼容检查。
  */
 public class FuckSableMixinConfigPlugin implements IMixinConfigPlugin {
 
     // 0 = 未知, 1 = <2.0.0 (V1/ServerSubLevel), 2 = >=2.0.0 (V2/PhysicsPipelineBody)
     private static int sableVersionState = 0;
     private static boolean versionChecked = false;
+
+    @Override
+    public void onLoad(String mixinPackage) {
+        // ScalableLux 不兼容声明绕过已迁移到 CoreMod（META-INF/coremods.json），
+        // 因为 onLoad 时机在 ModSorter 检查之后，无法绕过 pre-loading 阶段的不兼容错误。
+    }
 
     private static int getSableVersionState() {
         if (versionChecked) return sableVersionState;
@@ -36,7 +46,6 @@ public class FuckSableMixinConfigPlugin implements IMixinConfigPlugin {
             Method getLoadingModList = fmlLoaderClass.getMethod("getLoadingModList");
             Object modList = getLoadingModList.invoke(null);
 
-            // ModList.getMods() 返回 List<IModInfo>，直接遍历找 sable
             Method getMods = modList.getClass().getMethod("getMods");
             @SuppressWarnings("unchecked")
             List<Object> modInfos = (List<Object>) getMods.invoke(modList);
@@ -50,10 +59,6 @@ public class FuckSableMixinConfigPlugin implements IMixinConfigPlugin {
 
                     Class<?> defaultArtifactVersionClass = Class.forName("org.apache.maven.artifact.versioning.DefaultArtifactVersion");
                     Object threshold = defaultArtifactVersionClass.getConstructor(String.class).newInstance("2.0.0");
-                    // 不能用 getMethod("compareTo", artifactVersionClass) 查找：
-                    // 在 Mohist/Youer 等服务端上，ArtifactVersion.compareTo 是 Comparable<T> 的桥接方法，
-                    // 编译后参数类型为 Object，精确签名查找会抛 NoSuchMethodException。
-                    // 直接通过 Comparable 接口调用，由 JVM 多态分派到具体实现。
                     @SuppressWarnings({"unchecked", "rawtypes"})
                     int result = ((Comparable) version).compareTo(threshold);
                     boolean v2 = result >= 0;
@@ -67,20 +72,10 @@ public class FuckSableMixinConfigPlugin implements IMixinConfigPlugin {
             FuckSable.LOGGER.warn("FML API version detection failed, falling back to class signature detection", t);
         }
 
-        // Fallback: 直接检测 RapierPhysicsPipeline.addConstraint 方法签名
         sableVersionState = detectByClassSignature();
         return sableVersionState;
     }
 
-    /**
-     * Fallback：通过读取 class 字节码检测 RapierPhysicsPipeline.addConstraint 的参数类型。
-     * <p>
-     * V1 (1.x) 第一个参数为 ServerSubLevel，V2 (2.x) 第一个参数为 PhysicsPipelineBody。
-     * <p>
-     * 注意：不能用 Class.forName 加载 RapierPhysicsPipeline，因为此方法在 mixin prepare 阶段被调用
-     * （通过 shouldApplyMixin），此时加载一个被 mixin 处理的类会触发 ReEntrantTransformerError。
-     * 改用 ClassLoader.getResourceAsStream + ASM 读取方法描述符，避免触发类加载。
-     */
     private static int detectByClassSignature() {
         String className = "dev.ryanhcode.sable.physics.impl.rapier.RapierPhysicsPipeline";
         String classResource = className.replace('.', '/') + ".class";
@@ -101,8 +96,6 @@ public class FuckSableMixinConfigPlugin implements IMixinConfigPlugin {
                     public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
                         if (detected[0] != 0) return null;
                         if (!"addConstraint".equals(name) || descriptor == null || descriptor.isEmpty()) return null;
-                        // descriptor 格式: (Lxxx/yyy;Lxxx/yyy;...)Lreturn;
-                        // 取第一个参数类型
                         if (descriptor.length() < 3 || descriptor.charAt(1) != 'L') return null;
                         int start = 2;
                         int end = descriptor.indexOf(';', start);
@@ -145,18 +138,12 @@ public class FuckSableMixinConfigPlugin implements IMixinConfigPlugin {
             if (state == 0) return false;
             return state == 2;
         }
-        // ScalableLuxCompatMixin 引用了 ScalableLux 的类，只在 ScalableLux 加载时才应用，
-        // 避免 ScalableLux 不存在时类加载失败。
         if (mixinClassName.endsWith("ScalableLuxCompatMixin")) {
             return isModLoaded("scalablelux");
         }
         return true;
     }
 
-    /**
-     * 通过反射检测指定 mod 是否已加载。
-     * 在 mixin prepare 阶段调用 FMLLoader API 是安全的（FMLLoader 不是 mixin 目标）。
-     */
     private static boolean isModLoaded(String modId) {
         try {
             Class<?> fmlLoaderClass = Class.forName("net.neoforged.fml.loading.FMLLoader");
@@ -169,10 +156,6 @@ public class FuckSableMixinConfigPlugin implements IMixinConfigPlugin {
             FuckSable.LOGGER.debug("Failed to detect mod '{}' during mixin prepare, skipping related mixin", modId, t);
             return false;
         }
-    }
-
-    @Override
-    public void onLoad(String mixinPackage) {
     }
 
     @Override
