@@ -41,9 +41,9 @@ For production environments, choose thoroughly tested releases. If you encounter
 
 ## 修复项 / Fixes
 
-默认全开，可通过配置文件单独关闭。依赖其他 mod 的修复项，缺 mod 会自动禁用。
+默认全开，可通过配置文件单独关闭。依赖其他 mod 的修复项，缺 mod 会自动禁用。少数修复项因涉及前置依赖关系或基于 bug 的玩法，默认关闭（见下表标注）。
 
-Enabled by default, can be disabled individually via config. Fixes that depend on other mods auto-disable if the mod is missing.
+Enabled by default, can be disabled individually via config. Fixes that depend on other mods auto-disable if the mod is missing. A few fixes are disabled by default due to prerequisite dependencies or bug-based gameplay (see notes in the table below).
 
 ### Sable 核心修复 / Core Fixes
 
@@ -83,6 +83,8 @@ Enabled by default, can be disabled individually via config. Fixes that depend o
 | `frogport-extract-limit` | Create | 防止洼港（FrogportBlockEntity）`lazyTick` 从超大相邻库存拉取物品时服务器卡死：当 IItemHandler 槽位数超过 256 时跳过 `ItemHelper.extract`，每 60 秒告警一次。/ Prevents server freeze when FrogportBlockEntity `lazyTick` pulls items from oversized adjacent inventories: skips `ItemHelper.extract` when IItemHandler slot count exceeds 256, logs once per 60s. |
 | `effortless-particle-fix` | Effortless, Sable | 修 Effortless 对着 Sable 物理结构操作时客户端崩溃。Sable 射线检测返回 Plot 存储区域的远端坐标，Effortless 用该坐标生成粒子时客户端未加载该区块导致崩溃。修复方式：跳过未加载区块的粒子生成。/ Fixes Effortless client crash when interacting with Sable physics structures. Sable raycasting returns Plot storage area coordinates (distant chunks), Effortless uses these to generate particles but the client hasn't loaded those chunks. Fix: skip particle generation for unloaded chunks. |
 | `vista-camera-chunk-fix` | Vista, Sable | 修 Vista 摄像头区块加载与 Sable 物理结构不兼容：ViewFinder 在物理结构上时，其坐标是 SubLevel 内部坐标，Vista 用该坐标在主世界 force-load 区块导致 TPS 掉 0 和无限加载循环。修复方式：force-load 前将坐标投影到主世界坐标。/ Fixes Vista camera chunk loading incompatibility with Sable physics structures: when ViewFinder is on a physics structure, its coordinates are SubLevel-internal, Vista force-loads wrong chunks in the overworld causing TPS drop and infinite loading loops. Fix: project coordinates to world coordinates before force-loading. |
+| `sable-scalablelux-incompat-bypass` | Sable | 绕过 Sable 的 `neoforge.mods.toml` 中对 ScalableLux 的 `type = "incompatible"` 声明，防止 NeoForge ModSorter 在启动阶段直接拒绝加载。fs 启动时自动写入 `fml.toml` 的 `[dependencyOverrides]` 配置。**默认关闭** —— 是 `scalablelux-compat` 的前置项，需先启用并重启。/ Bypasses Sable's `type = "incompatible"` declaration against ScalableLux in `neoforge.mods.toml`, preventing NeoForge ModSorter from aborting startup. fs auto-writes the `[dependencyOverrides]` config to `fml.toml` on startup. **Disabled by default** — prerequisite for `scalablelux-compat`, must enable and restart first. |
+| `scalablelux-compat` | ScalableLux, Sable | 修 ScalableLux 存在时 Sable SubLevel 光照完全失效：ScalableLux 清空了主世界 `LevelLightEngine` 的 `blockEngine`/`skyEngine` 字段，导致 Sable 误判 SubLevel 无方块光、无天空光。拦截 `ServerLevelPlot` 构造函数中的 `new LevelLightEngine(...)` 调用，通过 `StarLightInterface` 重新计算正确的光照参数。**依赖 `sable-scalablelux-incompat-bypass`**。/ Fixes Sable SubLevel lighting being completely disabled when ScalableLux is installed: ScalableLux clears the `blockEngine`/`skyEngine` fields of the main world `LevelLightEngine`, causing Sable to misjudge SubLevel as having no block light and no sky light. Intercepts `new LevelLightEngine(...)` in `ServerLevelPlot` constructor, recalculates correct light parameters via `StarLightInterface`. **Depends on `sable-scalablelux-incompat-bypass`**. |
 
 ---
 
