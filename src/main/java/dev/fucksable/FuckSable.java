@@ -21,12 +21,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @Mod(FuckSable.MOD_ID)
 public class FuckSable {
     public static final String MOD_ID = "fucksable";
-    public static final String VERSION = "1.7.10";
+    public static final String VERSION = "1.7.12";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
     private static FuckSableConfig config;
@@ -125,6 +126,12 @@ public class FuckSable {
         FixRegistry.register("entity-lookup-remove-guard",
             "Catches ArrayIndexOutOfBoundsException thrown by Int2ObjectLinkedOpenHashMap inside EntityLookup.remove during PersistentEntitySectionManager.stopTracking, preventing single-entity removal failures from crashing the server tick loop when Sable corrupts the EntityLookup internal linked-map state",
             true, Set.of("sable"), FixEntry.Side.BOTH);
+        FixEntry blockGuard = FixRegistry.register("block-destroy-coordinate-guard",
+            "Prevents server crash and lag when modded items cause block destruction at integer-limit coordinates (Integer.MIN_VALUE/MAX_VALUE): blocks setBlock/destroyBlock calls when coordinates exceed world border limits (±30M) or Y bounds (-512~1024), preventing mass chunk loading and light propagation cascading",
+            true, Set.of("sable"), FixEntry.Side.BOTH);
+        blockGuard.setDefaultOption("xLimit", 30_000_000);
+        blockGuard.setDefaultOption("yMin", -512);
+        blockGuard.setDefaultOption("yMax", 1024);
         FixRegistry.register("frogport-extract-limit",
             "Prevents server freeze when FrogportBlockEntity.lazyTick pulls items from oversized adjacent inventories (hopper chains, Create warehouses): skips ItemHelper.extract when IItemHandler slot count exceeds 256, logs once per 60s",
             true, Set.of("create"), FixEntry.Side.BOTH);
@@ -174,6 +181,16 @@ public class FuckSable {
             Boolean state = config.getFixStates().get(entry.getId());
             if (state != null) {
                 entry.setEnabled(state);
+            }
+        }
+
+        // 6.1 应用配置中的修复项参数
+        for (Map.Entry<String, Map<String, Object>> fixParamEntry : config.getFixParams().entrySet()) {
+            FixEntry fixEntry = FixRegistry.getFix(fixParamEntry.getKey());
+            if (fixEntry != null) {
+                for (Map.Entry<String, Object> param : fixParamEntry.getValue().entrySet()) {
+                    fixEntry.setOption(param.getKey(), param.getValue());
+                }
             }
         }
 

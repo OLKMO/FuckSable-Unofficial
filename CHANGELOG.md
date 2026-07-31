@@ -2,6 +2,18 @@
 
 All notable changes to FuckSable will be documented in this file.
 
+## [1.7.12] - 2026-07-31
+
+### 变更 / Changes
+
+- **async-save PalettedContainer 多线程崩溃修复 / async-save PalettedContainer multithreading crash fix**: 修复 `async-save` 把整个 `saveAll` 重定向到异步线程导致 `PalettedContainer.pack` 触发 ThreadingDetector 崩溃的问题。改为统一"主线程序列化 + 异步磁盘 I/O"模式：序列化（`PalettedContainer.pack` → NBT 编码）在主线程执行，磁盘 I/O（`attemptSaveSubLevel`/`attemptSaveHoldingChunk`）提交到异步线程执行。/ Fixed `async-save` redirecting entire `saveAll` to async thread causing `PalettedContainer.pack` ThreadingDetector crash. Changed to unified "main-thread serialization + async disk I/O" model: serialization (`PalettedContainer.pack` → NBT encoding) runs on main thread, disk I/O (`attemptSaveSubLevel`/`attemptSaveHoldingChunk`) submitted to async thread.
+  - 移除 c2me 特殊处理，统一行为。/ Removed c2me special handling, unified behavior.
+
+- **整数极限方块破坏坐标防护 / Integer-overflow block destruction coordinate guard (Issue #14)**: 新增 `block-destroy-coordinate-guard` 修复项，拦截 `Level.setBlock` 和 `Level.destroyBlock`，当坐标超出可配置范围（默认 X/Z ±30M, Y -512~1024）时跳过操作并记录警告（60 秒节流）。/ Added `block-destroy-coordinate-guard` fix: intercepts `Level.setBlock` and `Level.destroyBlock`, skips operations when coordinates exceed configurable limits (default X/Z ±30M, Y -512~1024) and logs throttled warnings (60s).
+  - 坐标范围可通过 `config/fucksable/config.json` 的 `fixParams.block-destroy-coordinate-guard` 节点调整。/ Coordinate limits are configurable via `fixParams.block-destroy-coordinate-guard` in `config/fucksable/config.json`.
+
+- **修复项参数恢复命令 / Fix options reset command**: 新增 `/fucksable <fix> reset` 命令，恢复指定修复项的参数到默认值。/ Added `/fucksable <fix> reset` command to reset a fix's options to defaults.
+
 ## [1.7.10] - 2026-07-31
 
 ### 变更 / Changes

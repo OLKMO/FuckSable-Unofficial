@@ -85,6 +85,7 @@ Enabled by default, can be disabled individually via config. Fixes that depend o
 | `vista-camera-chunk-fix` | Vista, Sable | 修 Vista 摄像头区块加载与 Sable 物理结构不兼容：ViewFinder 在物理结构上时，其坐标是 SubLevel 内部坐标，Vista 用该坐标在主世界 force-load 区块导致 TPS 掉 0 和无限加载循环。修复方式：force-load 前将坐标投影到主世界坐标。/ Fixes Vista camera chunk loading incompatibility with Sable physics structures: when ViewFinder is on a physics structure, its coordinates are SubLevel-internal, Vista force-loads wrong chunks in the overworld causing TPS drop and infinite loading loops. Fix: project coordinates to world coordinates before force-loading. |
 | `sable-scalablelux-incompat-bypass` | Sable | 绕过 Sable 的 `neoforge.mods.toml` 中对 ScalableLux 的 `type = "incompatible"` 声明，防止 NeoForge ModSorter 在启动阶段直接拒绝加载。fs 启动时自动写入 `fml.toml` 的 `[dependencyOverrides]` 配置。**默认关闭** —— 是 `scalablelux-compat` 的前置项，需先启用并重启。/ Bypasses Sable's `type = "incompatible"` declaration against ScalableLux in `neoforge.mods.toml`, preventing NeoForge ModSorter from aborting startup. fs auto-writes the `[dependencyOverrides]` config to `fml.toml` on startup. **Disabled by default** — prerequisite for `scalablelux-compat`, must enable and restart first. |
 | `scalablelux-compat` | ScalableLux, Sable | 修 ScalableLux 存在时 Sable SubLevel 光照完全失效：ScalableLux 清空了主世界 `LevelLightEngine` 的 `blockEngine`/`skyEngine` 字段，导致 Sable 误判 SubLevel 无方块光、无天空光。拦截 `ServerLevelPlot` 构造函数中的 `new LevelLightEngine(...)` 调用，通过 `StarLightInterface` 重新计算正确的光照参数。**依赖 `sable-scalablelux-incompat-bypass`**。/ Fixes Sable SubLevel lighting being completely disabled when ScalableLux is installed: ScalableLux clears the `blockEngine`/`skyEngine` fields of the main world `LevelLightEngine`, causing Sable to misjudge SubLevel as having no block light and no sky light. Intercepts `new LevelLightEngine(...)` in `ServerLevelPlot` constructor, recalculates correct light parameters via `StarLightInterface`. **Depends on `sable-scalablelux-incompat-bypass`**. |
+| `block-destroy-coordinate-guard` | Sable | 防止某些 mod 物品触发方块破坏时坐标计算溢出至 `Integer.MIN_VALUE`/`MAX_VALUE`，导致大量区块被加载、服务器卡死或崩溃（Issue #14）。拦截 `Level.setBlock` 和 `Level.destroyBlock`，坐标超出可配置范围时跳过操作。坐标范围可通过 `config/fucksable/config.json` 的 `fixParams` 调整，用 `/fucksable block-destroy-coordinate-guard reset` 恢复默认值。/ Prevents server crash when modded items trigger block destruction at integer-overflow coordinates (`Integer.MIN_VALUE`/`MAX_VALUE`), causing massive chunk loading and server freeze (Issue #14). Intercepts `Level.setBlock` and `Level.destroyBlock`, skips operations when coordinates exceed configurable limits. Limits are configurable via `fixParams` in `config/fucksable/config.json`, reset with `/fucksable block-destroy-coordinate-guard reset`. |
 
 ---
 
@@ -96,6 +97,7 @@ Enabled by default, can be disabled individually via config. Fixes that depend o
 | `/fucksable <修复项/fix> on/off` | 启用/禁用某个修复项 / Enable/disable a fix |
 | `/fucksable all on/off` | 启用/禁用全部修复项 / Enable/disable all fixes |
 | `/fucksable default` | 恢复所有修复项为默认配置 / Reset all fixes to defaults |
+| `/fucksable <修复项/fix> reset` | 恢复指定修复项的参数到默认值 / Reset a fix's options to defaults |
 
 ---
 

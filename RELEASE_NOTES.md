@@ -1,3 +1,57 @@
+## v1.7.12
+
+### async-save PalettedContainer 多线程崩溃修复 / async-save PalettedContainer Multithreading Crash Fix
+
+修复 `async-save` 把整个 `saveAll` 重定向到异步线程，导致 `PalettedContainer.pack` 触发 ThreadingDetector 崩溃的问题。改为统一"主线程序列化 + 异步磁盘 I/O"模式：序列化在主线程执行，磁盘 I/O 提交到异步线程。
+
+Fixed `async-save` redirecting entire `saveAll` to async thread causing `PalettedContainer.pack` ThreadingDetector crash. Changed to unified "main-thread serialization + async disk I/O" model: serialization runs on main thread, disk I/O submitted to async thread.
+
+**为什么序列化必须在主线程 / Why serialization must be on main thread**:
+
+`PalettedContainer` 内部有 ThreadingDetector，不允许跨线程访问。原来的方案把整个 `saveAll`（包括序列化）放异步线程，触发了 ThreadingDetector 崩溃。磁盘 I/O 是真正的阻塞操作（会触发看门狗），序列化是 CPU 操作（不会阻塞线程），所以只把磁盘 I/O 放异步线程即可。
+
+`PalettedContainer` has an internal ThreadingDetector that disallows cross-thread access. The old approach put entire `saveAll` (including serialization) on async thread, triggering ThreadingDetector crash. Disk I/O is a true blocking operation (triggers watchdog), serialization is a CPU operation (doesn't block thread), so only disk I/O needs to be on async thread.
+
+### 整数极限方块破坏坐标防护 / Integer-Overflow Block Destruction Coordinate Guard (Issue #14)
+
+新增 `block-destroy-coordinate-guard` 修复项，防止某些 mod 物品触发方块破坏时坐标计算溢出至 `Integer.MIN_VALUE`/`MAX_VALUE`，导致大量区块被加载、光照更新范围极大，最终服务器卡死或崩溃。
+
+Added `block-destroy-coordinate-guard` fix: prevents server crash when modded items trigger block destruction at integer-overflow coordinates (`Integer.MIN_VALUE`/`MAX_VALUE`), which causes massive chunk loading and lighting updates.
+
+**配置 / Configuration**:
+
+坐标范围可通过 `config/fucksable/config.json` 的 `fixParams.block-destroy-coordinate-guard` 节点调整：
+
+Coordinate limits are configurable via `fixParams.block-destroy-coordinate-guard` in `config/fucksable/config.json`:
+
+```json
+"fixParams": {
+  "block-destroy-coordinate-guard": {
+    "xLimit": 30000000,
+    "yMin": -512,
+    "yMax": 1024
+  }
+}
+```
+
+如果调整后需要恢复默认值，使用命令 `/fucksable block-destroy-coordinate-guard reset`。
+
+To reset to defaults after adjustment, use command `/fucksable block-destroy-coordinate-guard reset`.
+
+### 修复项参数恢复命令 / Fix Options Reset Command
+
+新增 `/fucksable <fix> reset` 命令，恢复指定修复项的参数到默认值。适用于用户手动修改 `config.json` 中的 `fixParams` 后参数写错、需要恢复的情况。
+
+Added `/fucksable <fix> reset` command to reset a fix's options to defaults. Useful when users manually edit `fixParams` in `config.json` and need to recover from invalid values.
+
+### 兼容性 / Compatibility
+
+- Sable 1.x 和 2.x / Sable 1.x and 2.x
+- NeoForge 1.21.1
+- Mohist/Youer 混合服务端 / Mohist/Youer hybrid servers
+- ScalableLux（光照优化）兼容 / ScalableLux (lighting optimization) compatible
+- c2me 兼容 / c2me compatible
+
 ## v1.7.10
 
 ### ScalableLux 不兼容声明绕过 / ScalableLux Incompatibility Declaration Bypass

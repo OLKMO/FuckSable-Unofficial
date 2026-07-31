@@ -17,7 +17,6 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.LevelChunk;
 
 import java.util.ArrayList;
@@ -48,6 +47,8 @@ public class FuckSableCommand {
                     .executes(ctx -> toggleFix(ctx, true)))
                 .then(Commands.literal("off")
                     .executes(ctx -> toggleFix(ctx, false)))
+                .then(Commands.literal("reset")
+                    .executes(FuckSableCommand::resetFixOptions))
             )
             .then(Commands.literal("default")
                 .executes(FuckSableCommand::resetToDefaults)
@@ -142,6 +143,21 @@ public class FuckSableCommand {
         FuckSable.saveConfig();
         String key = enabled ? "command.fix-enabled" : "command.fix-disabled";
         context.getSource().sendSuccess(() -> Component.literal(LanguageManager.get(key, fixId)), true);
+        return 1;
+    }
+
+    private static int resetFixOptions(CommandContext<CommandSourceStack> context) {
+        String fixId = StringArgumentType.getString(context, "fix");
+        FixEntry entry = FixRegistry.getFix(fixId);
+
+        if (entry == null) {
+            context.getSource().sendFailure(Component.literal(LanguageManager.get("command.fix-unknown", fixId)));
+            return 0;
+        }
+
+        entry.resetOptions();
+        FuckSable.saveConfig();
+        context.getSource().sendSuccess(() -> Component.literal("Reset options for " + fixId + " to defaults"), true);
         return 1;
     }
 

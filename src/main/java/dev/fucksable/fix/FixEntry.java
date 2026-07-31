@@ -35,6 +35,7 @@ public class FixEntry {
     private boolean environmentMet;
     private boolean enabled;
     private final Map<String, Object> options;
+    private final Map<String, Object> defaultOptions = new LinkedHashMap<>();
 
     FixEntry(String id, String description, boolean defaultEnabled, Set<String> requiredMods, Side side) {
         this(id, description, defaultEnabled, requiredMods, side, false);
@@ -99,4 +100,25 @@ public class FixEntry {
         if (v == null) return defaultValue;
         try { return (T) v; } catch (ClassCastException e) { return defaultValue; }
     }
+
+    /**
+     * 设置默认选项。同时写入defaultOptions和options（即当前值也变为默认值）。
+     */
+    public void setDefaultOption(String key, Object value) {
+        defaultOptions.put(key, value);
+        options.put(key, value);
+    }
+
+    /**
+     * 将options恢复为defaultOptions的副本。
+     */
+    public void resetOptions() {
+        options.clear();
+        options.putAll(defaultOptions);
+    }
+
+    /**
+     * 返回默认选项的不可修改视图。
+     */
+    public Map<String, Object> getDefaultOptions() { return Collections.unmodifiableMap(defaultOptions); }
 }

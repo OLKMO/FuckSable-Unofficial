@@ -41,7 +41,8 @@
     "SableUDPPacketDecoderMixin",
     "PersistentEntitySectionManagerStopTrackingGuardMixin",
     "RigidBodyHandleMixin",
-    "ScalableLuxCompatMixin"
+    "ScalableLuxCompatMixin",
+    "LevelDestroyBlockGuardMixin"
   ],
   "client": [
     "EffortlessParticleFixMixin"

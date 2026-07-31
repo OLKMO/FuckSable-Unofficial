@@ -20,6 +20,7 @@ public final class FuckSableConfig {
     private String language = "en";
     private boolean autoUpdate = false;
     private final Map<String, Boolean> fixes = new LinkedHashMap<>();
+    private final Map<String, Map<String, Object>> fixParams = new LinkedHashMap<>();
     private boolean existedOnDisk = false;
 
     private FuckSableConfig() {}
@@ -43,6 +44,27 @@ public final class FuckSableConfig {
                         config.fixes.put(entry.getKey(), entry.getValue().getAsBoolean());
                     }
                 }
+                if (obj.has("fixParams")) {
+                    JsonObject paramsObj = obj.getAsJsonObject("fixParams");
+                    for (Map.Entry<String, JsonElement> entry : paramsObj.entrySet()) {
+                        Map<String, Object> params = new LinkedHashMap<>();
+                        JsonObject fixParamsObj = entry.getValue().getAsJsonObject();
+                        for (Map.Entry<String, JsonElement> param : fixParamsObj.entrySet()) {
+                            JsonElement val = param.getValue();
+                            if (val.isJsonPrimitive()) {
+                                JsonPrimitive prim = val.getAsJsonPrimitive();
+                                if (prim.isNumber()) {
+                                    params.put(param.getKey(), prim.getAsNumber());
+                                } else if (prim.isBoolean()) {
+                                    params.put(param.getKey(), prim.getAsBoolean());
+                                } else {
+                                    params.put(param.getKey(), prim.getAsString());
+                                }
+                            }
+                        }
+                        config.fixParams.put(entry.getKey(), params);
+                    }
+                }
             } catch (Exception e) {
                 FuckSable.LOGGER.warn("Failed to load config, using defaults", e);
             }
@@ -62,6 +84,24 @@ public final class FuckSableConfig {
                 fixesObj.addProperty(entry.getId(), entry.isExplicitlyEnabled());
             }
             obj.add("fixes", fixesObj);
+            JsonObject paramsObj = new JsonObject();
+            for (FixEntry entry : FixRegistry.getAllFixes()) {
+                Map<String, Object> opts = entry.getOptions();
+                if (opts.isEmpty()) continue;
+                JsonObject fixParamsObj = new JsonObject();
+                for (Map.Entry<String, Object> opt : opts.entrySet()) {
+                    Object val = opt.getValue();
+                    if (val instanceof Number) {
+                        fixParamsObj.addProperty(opt.getKey(), (Number) val);
+                    } else if (val instanceof Boolean) {
+                        fixParamsObj.addProperty(opt.getKey(), (Boolean) val);
+                    } else {
+                        fixParamsObj.addProperty(opt.getKey(), String.valueOf(val));
+                    }
+                }
+                paramsObj.add(entry.getId(), fixParamsObj);
+            }
+            obj.add("fixParams", paramsObj);
             Files.writeString(configPath, GSON.toJson(obj));
         } catch (IOException e) {
             FuckSable.LOGGER.error("Failed to save config", e);
@@ -71,5 +111,6 @@ public final class FuckSableConfig {
     public String getLanguage() { return language; }
     public boolean isAutoUpdate() { return autoUpdate; }
     public Map<String, Boolean> getFixStates() { return fixes; }
+    public Map<String, Map<String, Object>> getFixParams() { return fixParams; }
     public boolean existedOnDisk() { return existedOnDisk; }
 }

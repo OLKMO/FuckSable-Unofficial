@@ -3,8 +3,6 @@ package dev.fucksable.mixin;
 import dev.fucksable.FuckSable;
 import dev.fucksable.fix.FixRegistry;
 import dev.ryanhcode.sable.api.physics.PhysicsPipelineBody;
-import dev.ryanhcode.sable.api.physics.constraint.PhysicsConstraintConfiguration;
-import dev.ryanhcode.sable.api.physics.constraint.PhysicsConstraintHandle;
 import dev.ryanhcode.sable.companion.math.Pose3d;
 import dev.ryanhcode.sable.physics.impl.rapier.Rapier3D;
 import dev.ryanhcode.sable.physics.impl.rapier.RapierPhysicsPipeline;
