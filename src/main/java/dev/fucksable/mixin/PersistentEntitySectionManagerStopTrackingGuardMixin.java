@@ -55,7 +55,7 @@ public class PersistentEntitySectionManagerStopTrackingGuardMixin {
         at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/entity/EntityLookup;remove(Lnet/minecraft/world/level/entity/EntityAccess;)V"),
         remap = false
     )
-    private void fucksable$safeEntityLookupRemove(EntityLookup instance, EntityAccess entity) {
+    private void fucksable$safeEntityLookupRemove(EntityLookup<EntityAccess> instance, EntityAccess entity) {
         if (!FixRegistry.isEnabled("entity-lookup-remove-guard")) {
             instance.remove(entity);
             return;

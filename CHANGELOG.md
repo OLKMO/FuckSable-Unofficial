@@ -2,6 +2,14 @@
 
 All notable changes to FuckSable will be documented in this file.
 
+## [1.7.9] - 2026-07-31
+
+### Bug 修复 / Bug Fixes
+
+- **ScalableLux 兼容性 mixin @At("NEW") target 格式修复 / ScalableLux compat mixin @At("NEW") target format fix**: 修复 v1.7.8 中 `ScalableLuxCompatMixin` 的 `@At("NEW")` target 使用了错误的方法描述符格式 `L<类名>;<init>(<参数描述符>)V`，导致 mixin 扫描 0 个目标（`Scanned 0 target(s). No refMap loaded.`），服务端启动崩溃（Issue #13）。/ Fixed v1.7.8 `ScalableLuxCompatMixin` `@At("NEW")` target using incorrect method descriptor format `L<class>;<init>(<descriptor>)V`, causing mixin to scan 0 targets (`Scanned 0 target(s). No refMap loaded.`) and crash server startup (Issue #13).
+  - **问题 / Issue**: `@At("NEW")` 要求 `new <类名>(<参数描述符>)V` 格式，但代码误用了 `L<类名>;<init>(<参数描述符>)V` 方法描述符格式，mixin 无法匹配 `new LevelLightEngine(...)` 调用点。/ `@At("NEW")` requires `new <class>(<descriptor>)V` format, but code mistakenly used `L<class>;<init>(<descriptor>)V` method descriptor format, mixin could not match `new LevelLightEngine(...)` call site.
+  - **修复 / Fix**: 将 target 改为 `new net/minecraft/world/level/lighting/LevelLightEngine(Lnet/minecraft/world/level/chunk/LightChunkGetter;ZZ)V`。/ Changed target to `new net/minecraft/world/level/lighting/LevelLightEngine(Lnet/minecraft/world/level/chunk/LightChunkGetter;ZZ)V`.
+
 ## [1.7.8] - 2026-07-31
 
 ### Bug 修复 / Bug Fixes

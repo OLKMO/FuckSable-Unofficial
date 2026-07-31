@@ -39,7 +39,7 @@ public abstract class ScalableLuxCompatMixin {
         method = "<init>",
         at = @At(
             value = "NEW",
-            target = "Lnet/minecraft/world/level/lighting/LevelLightEngine;<init>(Lnet/minecraft/world/level/chunk/LightChunkGetter;ZZ)V",
+            target = "new net/minecraft/world/level/lighting/LevelLightEngine(Lnet/minecraft/world/level/chunk/LightChunkGetter;ZZ)V",
             remap = false
         ),
         remap = false

@@ -1,3 +1,27 @@
+## v1.7.9
+
+### ScalableLux 兼容性 mixin @At("NEW") target 格式修复 / ScalableLux Compat Mixin @At("NEW") Target Format Fix
+
+修复 v1.7.8 中 `ScalableLuxCompatMixin` 的 `@At("NEW")` target 使用了错误的方法描述符格式，导致 mixin 扫描 0 个目标，服务端启动崩溃（Issue #13）。
+
+Fixed v1.7.8 `ScalableLuxCompatMixin` `@At("NEW")` target using incorrect method descriptor format, causing mixin to scan 0 targets and crash server startup (Issue #13).
+
+**问题 / Issue**: `@At("NEW")` 要求 `new <类名>(<参数描述符>)V` 格式，但代码误用了 `L<类名>;<init>(<参数描述符>)V` 方法描述符格式，mixin 无法匹配 `new LevelLightEngine(...)` 调用点，报 `Scanned 0 target(s). No refMap loaded.`。
+
+`@At("NEW")` requires `new <class>(<descriptor>)V` format, but code mistakenly used `L<class>;<init>(<descriptor>)V` method descriptor format, mixin could not match `new LevelLightEngine(...)` call site, reporting `Scanned 0 target(s). No refMap loaded.`.
+
+**修复 / Fix**: 将 target 改为 `new net/minecraft/world/level/lighting/LevelLightEngine(Lnet/minecraft/world/level/chunk/LightChunkGetter;ZZ)V`。
+
+Changed target to `new net/minecraft/world/level/lighting/LevelLightEngine(Lnet/minecraft/world/level/chunk/LightChunkGetter;ZZ)V`.
+
+### 兼容性 / Compatibility
+
+- Sable 1.x 和 2.x / Sable 1.x and 2.x
+- NeoForge 1.21.1
+- Mohist/Youer 混合服务端 / Mohist/Youer hybrid servers
+- ScalableLux（光照优化）兼容 / ScalableLux (lighting optimization) compatible
+- c2me 兼容 / c2me compatible
+
 ## v1.7.8
 
 ### ScalableLux 兼容性 mixin 注入失败修复 / ScalableLux Compat Mixin Injection Failure Fix
