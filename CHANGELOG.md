@@ -2,6 +2,13 @@
 
 All notable changes to FuckSable will be documented in this file.
 
+## [1.7.14] - 2026-08-01
+
+### 变更 / Changes
+
+- **ScalableLux 兼容性光照修复 / ScalableLux compat lighting fix (PR #16)**: 修复 `ScalableLuxCompatMixin` 中 `chunkGetter instanceof Level` 判断在 SubLevel 场景下失败导致 ScalableLux 兼容修复逻辑不执行、SubLevel 光照失效的问题。SubLevel 传入的 `LightChunkGetter` 本身可能不是 `Level` 实例（而是包装器），但 `getLevel()` 返回真正的 `Level`。改为 `chunkGetter.getLevel() instanceof Level` 后能正确识别。/ Fixed `ScalableLuxCompatMixin` `chunkGetter instanceof Level` check failing in SubLevel scenarios, causing ScalableLux compat logic to be skipped and SubLevel lighting to break. The `LightChunkGetter` passed for SubLevels may not be a `Level` instance itself (it's a wrapper), but `getLevel()` returns the real `Level`. Changed to `chunkGetter.getLevel() instanceof Level` for correct detection.
+  - 感谢 [Variapolis](https://github.com/Variapolis) 的贡献。/ Thanks to [Variapolis](https://github.com/Variapolis) for the contribution.
+
 ## [1.7.13] - 2026-07-31
 
 ### 变更 / Changes
