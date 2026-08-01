@@ -38,8 +38,8 @@ public class LevelDestroyBlockGuardMixin {
         }
     }
 
-    @Inject(method = "destroyBlock(Lnet/minecraft/core/BlockPos;ZLnet/minecraft/world/entity/Entity;)Z", at = @At("HEAD"), cancellable = true)
-    private void fucksable$guardDestroyBlockBounds(BlockPos pos, boolean dropBlock, net.minecraft.world.entity.Entity entity, CallbackInfoReturnable<Boolean> cir) {
+    @Inject(method = "destroyBlock(Lnet/minecraft/core/BlockPos;ZLnet/minecraft/world/entity/Entity;I)Z", at = @At("HEAD"), cancellable = true)
+    private void fucksable$guardDestroyBlockBounds(BlockPos pos, boolean dropBlock, net.minecraft.world.entity.Entity entity, int recursionLevel, CallbackInfoReturnable<Boolean> cir) {
         if (!FixRegistry.isEnabled("block-destroy-coordinate-guard")) return;
         if (fucksable$isCoordinateExtreme(pos)) {
             fucksable$warnExtremeCoordinate("destroyBlock", pos);

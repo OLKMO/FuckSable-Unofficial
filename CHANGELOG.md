@@ -2,6 +2,12 @@
 
 All notable changes to FuckSable will be documented in this file.
 
+## [1.7.13] - 2026-07-31
+
+### 变更 / Changes
+
+- **block-destroy-coordinate-guard mixin 注入失败修复 / block-destroy-coordinate-guard mixin injection failure fix (Issue #15)**: 修复 `LevelDestroyBlockGuardMixin` 中 `destroyBlock` 方法签名错误导致 mixin 注入失败、游戏启动崩溃的问题。1.21.1 中 `Level.destroyBlock` 的真实签名是 4 个参数 `destroyBlock(BlockPos, boolean, Entity, int)`，之前错误地使用了 3 个参数的签名。/ Fixed `LevelDestroyBlockGuardMixin` crash caused by incorrect `destroyBlock` method signature. In 1.21.1, `Level.destroyBlock` has 4 parameters `destroyBlock(BlockPos, boolean, Entity, int)`, but the mixin incorrectly used a 3-parameter signature.
+
 ## [1.7.12] - 2026-07-31
 
 ### 变更 / Changes
