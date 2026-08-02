@@ -2,6 +2,7 @@ package dev.fucksable.mixin;
 
 import dev.fucksable.FuckSable;
 import dev.fucksable.debug.BlockUpdateMonitor;
+import dev.fucksable.i18n.LanguageManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
@@ -18,6 +19,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * 拦截 ServerLevel.sendBlockUpdated 方法，监控指定位置的方块更新事件。
  * 当监控位置发生更新时，记录完整调用链并通知玩家。
  */
+@SuppressWarnings("null")
 @Mixin(ServerLevel.class)
 public class BlockUpdateMonitorMixin {
 
@@ -35,29 +37,29 @@ public class BlockUpdateMonitorMixin {
         // 获取调用栈
         StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
         StringBuilder traceBuilder = new StringBuilder();
-        traceBuilder.append("=== fs2temp 方块更新监控 ===\n");
-        traceBuilder.append("位置: ").append(pos.toShortString()).append("\n");
-        traceBuilder.append("旧状态: ").append(oldState).append("\n");
-        traceBuilder.append("新状态: ").append(newState).append("\n");
-        traceBuilder.append("更新标志: ").append(flags).append("\n");
-        traceBuilder.append("维度: ").append(((ServerLevel) (Object) this).dimension().location()).append("\n");
-        traceBuilder.append("--- 调用链 ---\n");
+        traceBuilder.append(LanguageManager.get("monitor.blockupdate-header")).append("\n");
+        traceBuilder.append(LanguageManager.get("monitor.position", pos.toShortString())).append("\n");
+        traceBuilder.append(LanguageManager.get("monitor.old-state", oldState)).append("\n");
+        traceBuilder.append(LanguageManager.get("monitor.new-state", newState)).append("\n");
+        traceBuilder.append(LanguageManager.get("monitor.flags", flags)).append("\n");
+        traceBuilder.append(LanguageManager.get("monitor.dimension", ((ServerLevel) (Object) this).dimension().location())).append("\n");
+        traceBuilder.append(LanguageManager.get("monitor.call-chain")).append("\n");
 
         // 跳过前几帧（getStackTrace, 本方法, sendBlockUpdated）
         for (int i = 3; i < Math.min(stackTrace.length, 30); i++) {
             traceBuilder.append("  at ").append(stackTrace[i].toString()).append("\n");
         }
         if (stackTrace.length > 30) {
-            traceBuilder.append("  ... 还有 ").append(stackTrace.length - 30).append(" 帧\n");
+            traceBuilder.append(LanguageManager.get("monitor.more-frames", stackTrace.length - 30)).append("\n");
         }
 
         String traceText = traceBuilder.toString();
 
         // 发送可复制的消息
-        Component message = Component.literal("[fs2temp] " + pos.toShortString() + " 更新")
+        Component message = Component.literal(LanguageManager.get("monitor.blockupdate-title", pos.toShortString()))
             .withStyle(style -> style
                 .withClickEvent(new ClickEvent(ClickEvent.Action.COPY_TO_CLIPBOARD, traceText))
-                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal("点击复制完整调用链")))
+                .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(LanguageManager.get("monitor.click-to-copy"))))
             );
 
         player.sendSystemMessage(message);

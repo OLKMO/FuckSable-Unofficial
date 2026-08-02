@@ -2,6 +2,29 @@
 
 All notable changes to FuckSable will be documented in this file.
 
+## [1.7.18] - 2026-08-01
+
+### Bug 修复 / Bug Fixes
+
+- **i18n 中文乱码修复 / i18n Chinese garbled text fix**: 修复 `LanguageManager` 读写语言文件时未指定 UTF-8 字符集导致中文乱码的问题。/ Fixed `LanguageManager` not specifying UTF-8 charset when reading/writing language files, causing garbled Chinese text.
+
+### 变更 / Changes
+
+- **硬编码中文国际化 / Hardcoded Chinese i18n**: 将 `FuckSableCommand`、`LevelSetBlockMonitorMixin`、`BlockUpdateMonitorMixin` 中的硬编码中文输出改为 i18n 调用，新增对应的翻译键到 `zh.yml` 和 `en.yml`（语言包版本升至 1.3）。/ Replaced hardcoded Chinese strings in `FuckSableCommand`, `LevelSetBlockMonitorMixin`, `BlockUpdateMonitorMixin` with i18n calls, added corresponding translation keys to `zh.yml` and `en.yml` (lang pack version bumped to 1.3).
+
+## [1.7.17] - 2026-08-01
+
+### Bug 修复 / Bug Fixes
+
+- **`/fucksable all reset` 命令修复 / `/fucksable all reset` command fix**: 修复 `resetFixOptions` 方法漏了处理 `all` 参数导致提示"all不是配置项"的问题。现在 `/fucksable all reset` 会遍历所有修复项并重置 options 到默认值。/ Fixed `resetFixOptions` method not handling the `all` argument, causing "all is not a valid fix" error. Now `/fucksable all reset` iterates all fixes and resets their options to defaults.
+
+## [1.7.16] - 2026-08-01
+
+### 变更 / Changes
+
+- **配置文件自动迁移 / Config file auto-migration**: 修复从老版本升级时配置文件不会自动补全新增选项的问题。现在每次启动都会重新保存配置文件，确保新增的可配置项（如 `yMaxMargin`）自动写入已有配置文件，保留用户已有的配置值。/ Fixed config file not auto-populating new options when upgrading from older versions. Config file is now re-saved on every startup to ensure new configurable options (e.g. `yMaxMargin`) are automatically written to existing config files, preserving user's existing values.
+  - 之前只在配置文件不存在时才重新生成。/ Previously only regenerated when config file was missing.
+
 ## [1.7.15] - 2026-08-01
 
 ### 变更 / Changes

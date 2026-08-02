@@ -57,12 +57,12 @@ public class PersistentEntitySectionManagerStopTrackingGuardMixin {
     )
     private void fucksable$safeEntityLookupRemove(EntityLookup<EntityAccess> instance, EntityAccess entity) {
         if (!FixRegistry.isEnabled("entity-lookup-remove-guard")) {
-            instance.remove(entity);
+            if (entity != null) instance.remove(entity);
             return;
         }
 
         try {
-            instance.remove(entity);
+            if (entity != null) instance.remove(entity);
         } catch (ArrayIndexOutOfBoundsException e) {
             FuckSable.LOGGER.warn("EntityLookup.remove skipped AIOOBE for entity {} (Int2ObjectLinkedOpenHashMap state corrupted, see Sable issue tracker)", entity, e);
         } catch (Throwable t) {

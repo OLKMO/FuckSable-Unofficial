@@ -4,7 +4,6 @@ import dev.fucksable.FuckSable;
 import dev.fucksable.fix.FixEntry;
 import dev.fucksable.fix.FixRegistry;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.border.WorldBorder;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
@@ -64,7 +63,7 @@ public class PlayerPositionGuardMixin {
             FuckSable.LOGGER.warn("Player {} was out of world bounds at ({}, {}, {}), clamping to ({}, {}, {})",
                 self.getName().getString(), pos.x, pos.y, pos.z, clampedX, clampedY, clampedZ);
             self.setPos(clampedX, clampedY, clampedZ);
-            self.setDeltaMovement(Vec3.ZERO);
+            self.setDeltaMovement(new Vec3(0.0, 0.0, 0.0));
         }
     }
 

@@ -3,6 +3,7 @@ package dev.fucksable.i18n;
 import dev.fucksable.FuckSable;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
 
@@ -68,17 +69,17 @@ public final class LanguageManager {
                 return;
             }
 
-            String embeddedContent = new String(embedded.readAllBytes());
+            String embeddedContent = new String(embedded.readAllBytes(), StandardCharsets.UTF_8);
 
             if (Files.exists(targetPath)) {
-                String existingContent = Files.readString(targetPath);
+                String existingContent = Files.readString(targetPath, StandardCharsets.UTF_8);
                 if (contentMatches(embeddedContent, existingContent)) {
                     return;
                 }
                 FuckSable.LOGGER.info("Language pack {} is outdated, replacing with embedded version", lang);
             }
 
-            Files.writeString(targetPath, embeddedContent, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+            Files.writeString(targetPath, embeddedContent, StandardCharsets.UTF_8, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
             FuckSable.LOGGER.info("Extracted language pack: {}", lang);
 
         } catch (IOException e) {
@@ -122,7 +123,7 @@ public final class LanguageManager {
     private static Map<String, String> loadLanguageFile(String lang) {
         Path file = langPath.resolve(lang + ".yml");
         if (!Files.exists(file)) return new LinkedHashMap<>();
-        try (Reader reader = Files.newBufferedReader(file)) {
+        try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
             Map<String, Object> nested = SimpleYamlReader.read(reader);
             return SimpleYamlReader.flatten(nested);
         } catch (IOException e) {

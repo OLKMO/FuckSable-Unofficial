@@ -27,7 +27,7 @@ import java.util.Set;
 @Mod(FuckSable.MOD_ID)
 public class FuckSable {
     public static final String MOD_ID = "fucksable";
-    public static final String VERSION = "1.7.15";
+    public static final String VERSION = "1.7.18";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
     private static FuckSableConfig config;
@@ -195,10 +195,8 @@ public class FuckSable {
             }
         }
 
-        // 6.5 如果配置文件不存在（首次启动或被删除），立即重新生成
-        if (!config.existedOnDisk()) {
-            config.save(configDir);
-        }
+        // 6.5 保存配置文件：首次启动生成新文件，版本升级时迁移补全新选项
+        config.save(configDir);
 
         // 6.6 自动添加 ScalableLux 依赖覆盖到 fml.toml
         if (FixRegistry.isEnabled("sable-scalablelux-incompat-bypass")) {

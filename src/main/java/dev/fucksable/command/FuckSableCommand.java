@@ -22,6 +22,7 @@ import net.minecraft.world.level.chunk.LevelChunk;
 import java.util.ArrayList;
 import java.util.List;
 
+@SuppressWarnings("null")
 public class FuckSableCommand {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
@@ -148,6 +149,19 @@ public class FuckSableCommand {
 
     private static int resetFixOptions(CommandContext<CommandSourceStack> context) {
         String fixId = StringArgumentType.getString(context, "fix");
+
+        if (fixId.equalsIgnoreCase("all")) {
+            int changed = 0;
+            for (FixEntry entry : FixRegistry.getAllFixes()) {
+                entry.resetOptions();
+                changed++;
+            }
+            FuckSable.saveConfig();
+            final int count = changed;
+            context.getSource().sendSuccess(() -> Component.literal("Reset options for all fixes to defaults (" + count + " fixes)"), true);
+            return changed;
+        }
+
         FixEntry entry = FixRegistry.getFix(fixId);
 
         if (entry == null) {
@@ -195,14 +209,14 @@ public class FuckSableCommand {
 
         ResourceLocation targetId = ResourceLocation.tryParse(blockId);
         if (targetId == null) {
-            source.sendFailure(Component.literal("无效的方块ID: " + blockId));
+            source.sendFailure(Component.literal(LanguageManager.get("command.invalid-block-id", blockId)));
             return 0;
         }
 
         var registry = net.minecraft.core.registries.BuiltInRegistries.BLOCK;
         var holder = registry.getHolder(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.BLOCK, targetId));
         if (holder.isEmpty()) {
-            source.sendFailure(Component.literal("未找到方块: " + targetId));
+            source.sendFailure(Component.literal(LanguageManager.get("command.block-not-found", targetId)));
             return 0;
         }
 
@@ -262,12 +276,12 @@ public class FuckSableCommand {
         }
 
         int chunks = totalChunks[0];
-        source.sendSuccess(() -> Component.literal("扫描完成，扫描了 " + chunks + " 个区块"), false);
+        source.sendSuccess(() -> Component.literal(LanguageManager.get("command.scan-complete", chunks)), false);
         if (results.isEmpty()) {
-            source.sendSuccess(() -> Component.literal("未找到方块: " + blockId), false);
+            source.sendSuccess(() -> Component.literal(LanguageManager.get("command.scan-no-result", blockId)), false);
         } else {
             int count = results.size();
-            source.sendSuccess(() -> Component.literal("找到 " + count + " 个 " + blockId + ":"), false);
+            source.sendSuccess(() -> Component.literal(LanguageManager.get("command.scan-found", count, blockId)), false);
             for (String line : results) {
                 source.sendSuccess(() -> Component.literal(line), false);
             }
@@ -351,7 +365,7 @@ public class FuckSableCommand {
     private static int startMonitor(CommandContext<CommandSourceStack> context) {
         CommandSourceStack source = context.getSource();
         if (!(source.getEntity() instanceof ServerPlayer player)) {
-            source.sendFailure(Component.literal("该命令只能由玩家执行"));
+            source.sendFailure(Component.literal(LanguageManager.get("command.player-only")));
             return 0;
         }
 
@@ -359,14 +373,14 @@ public class FuckSableCommand {
         BlockPos pos = coords.getBlockPos(source);
         BlockUpdateMonitor.startMonitoring(pos, player);
 
-        source.sendSuccess(() -> Component.literal("已开始监控位置 " + pos.toShortString() + " 的方块更新（点击消息可复制调用链）"), false);
+        source.sendSuccess(() -> Component.literal(LanguageManager.get("command.monitor-started", pos.toShortString())), false);
         return 1;
     }
 
     private static int stopAllMonitors(CommandContext<CommandSourceStack> context) {
         int count = BlockUpdateMonitor.getAllMonitors().size();
         BlockUpdateMonitor.stopAll();
-        context.getSource().sendSuccess(() -> Component.literal("已停止所有监控（共 " + count + " 个）"), false);
+        context.getSource().sendSuccess(() -> Component.literal(LanguageManager.get("command.monitor-stopped", count)), false);
         return count;
     }
 }
