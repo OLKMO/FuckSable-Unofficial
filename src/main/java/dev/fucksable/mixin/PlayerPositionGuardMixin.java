@@ -1,12 +1,14 @@
 package dev.fucksable.mixin;
 
 import dev.fucksable.FuckSable;
+import dev.fucksable.fix.FixEntry;
 import dev.fucksable.fix.FixRegistry;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.border.WorldBorder;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -39,10 +41,11 @@ public class PlayerPositionGuardMixin {
         double minZ = border.getMinZ() + 5.0;
         double maxZ = border.getMaxZ() - 5.0;
 
-        // Y 轴边界（原版高度 + 1000 格富裕空间）
+        // Y 轴边界（原版高度 + 可配置富裕空间，默认 1000）
         // Y 下界：创造模式拉回（+5），生存模式正常掉落不干预
         double minY = self.level().getMinBuildHeight() + 5.0;
-        double maxY = self.level().getMaxBuildHeight() + 1000.0;
+        double yMaxMargin = fucksable$getDoubleOption("yMaxMargin", 1000.0);
+        double maxY = self.level().getMaxBuildHeight() + yMaxMargin;
         boolean isCreative = self.isCreative();
 
         boolean outOfBounds = false;
@@ -63,5 +66,17 @@ public class PlayerPositionGuardMixin {
             self.setPos(clampedX, clampedY, clampedZ);
             self.setDeltaMovement(Vec3.ZERO);
         }
+    }
+
+    @Unique
+    private static double fucksable$getDoubleOption(String key, double defaultValue) {
+        FixEntry entry = FixRegistry.getFix("player-position-guard");
+        if (entry == null) return defaultValue;
+        Object val = entry.getOption(key);
+        if (val instanceof Number) return ((Number) val).doubleValue();
+        if (val instanceof String) {
+            try { return Double.parseDouble((String) val); } catch (NumberFormatException e) { return defaultValue; }
+        }
+        return defaultValue;
     }
 }

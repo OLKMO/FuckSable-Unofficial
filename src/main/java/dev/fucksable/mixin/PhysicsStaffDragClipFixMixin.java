@@ -1,6 +1,7 @@
 package dev.fucksable.mixin;
 
 import dev.fucksable.FuckSable;
+import dev.fucksable.fix.FixEntry;
 import dev.fucksable.fix.FixRegistry;
 import dev.ryanhcode.sable.sublevel.ServerSubLevel;
 import dev.ryanhcode.sable.sublevel.system.SubLevelPhysicsSystem;
@@ -9,6 +10,7 @@ import net.minecraft.world.level.border.WorldBorder;
 import org.joml.Vector3d;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -55,9 +57,10 @@ public class PhysicsStaffDragClipFixMixin {
         double minZ = border.getMinZ() + 1.0;
         double maxZ = border.getMaxZ() - 1.0;
 
-        // Y 轴边界：原版高度 + 1000 格富裕空间
+        // Y 轴边界：原版高度 + 可配置富裕空间（默认 1000）
         double minY = this.level.getMinBuildHeight() + 1.0;
-        double maxY = this.level.getMaxBuildHeight() + 1000.0;
+        double yMaxMargin = fucksable$getDoubleOption("yMaxMargin", 1000.0);
+        double maxY = this.level.getMaxBuildHeight() + yMaxMargin;
 
         boolean outOfBounds = false;
         double clampedX = position.x;
@@ -89,5 +92,17 @@ public class PhysicsStaffDragClipFixMixin {
             // 回到边界内，移除记录
             CLAMPED_SUBLEVELS.remove(subLevelId);
         }
+    }
+
+    @Unique
+    private static double fucksable$getDoubleOption(String key, double defaultValue) {
+        FixEntry entry = FixRegistry.getFix("physics-staff-drag-clipfix");
+        if (entry == null) return defaultValue;
+        Object val = entry.getOption(key);
+        if (val instanceof Number) return ((Number) val).doubleValue();
+        if (val instanceof String) {
+            try { return Double.parseDouble((String) val); } catch (NumberFormatException e) { return defaultValue; }
+        }
+        return defaultValue;
     }
 }

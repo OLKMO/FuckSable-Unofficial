@@ -2,6 +2,15 @@
 
 All notable changes to FuckSable will be documented in this file.
 
+## [1.7.15] - 2026-08-01
+
+### 变更 / Changes
+
+- **player-position-guard 与 physics-staff-drag-clipfix Y 轴上限可配置化 / player-position-guard and physics-staff-drag-clipfix Y-axis upper bound configurable (Issue #17)**: 将两个修复项中硬编码的 `getMaxBuildHeight() + 1000` 改为可通过配置文件调整的 `yMaxMargin` 选项（默认 1000）。/ Changed the hardcoded `getMaxBuildHeight() + 1000` in both fixes to a configurable `yMaxMargin` option (default 1000) via config file.
+  - 适用于调整了物理参数导致玩家/物理结构会飞到较高 Y 轴的服务器。/ Suitable for servers where physics tweaks cause players/structures to fly to higher Y levels.
+  - 配置路径：`config/fucksable/config.json` 的 `fixParams.player-position-guard.yMaxMargin` 和 `fixParams.physics-staff-drag-clipfix.yMaxMargin`。/ Config path: `fixParams.player-position-guard.yMaxMargin` and `fixParams.physics-staff-drag-clipfix.yMaxMargin` in `config/fucksable/config.json`.
+  - 可通过 `/fucksable <fix> reset` 命令恢复默认值。/ Can reset to default via `/fucksable <fix> reset` command.
+
 ## [1.7.14] - 2026-08-01
 
 ### 变更 / Changes
