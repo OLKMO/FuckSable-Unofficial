@@ -39,6 +39,13 @@ public abstract class RapierPhysicsPipelineMixin {
     private static volatile long fucksable$lastTeleportWarnTime = 0L;
 
     @Unique
+    private static final long FUCKSABLE$VELOCITY_WARN_INTERVAL_NS = 60_000_000_000L; // 60s
+    @Unique
+    private static volatile long fucksable$lastLinearVelocityWarnTime = 0L;
+    @Unique
+    private static volatile long fucksable$lastAngularVelocityWarnTime = 0L;
+
+    @Unique
     private boolean fucksable$isBodyValid(PhysicsPipelineBody body) {
         if (body == null) {
             return false;
@@ -64,8 +71,13 @@ public abstract class RapierPhysicsPipelineMixin {
     private void fucksable$safeGetLinearVelocity(PhysicsPipelineBody body, Vector3d dest, CallbackInfoReturnable<Vector3d> cir) {
         if (!this.fucksable$isPanicGuardEnabled()) return;
         if (!this.fucksable$isBodyValid(body)) {
-            FuckSable.LOGGER.warn("Attempted to get linear velocity of invalid/removed body (id={}), returning zero",
-                body != null ? Rapier3D.getID(body) : "null");
+            long now = System.nanoTime();
+            long last = fucksable$lastLinearVelocityWarnTime;
+            if (now - last > FUCKSABLE$VELOCITY_WARN_INTERVAL_NS) {
+                fucksable$lastLinearVelocityWarnTime = now;
+                FuckSable.LOGGER.warn("Attempted to get linear velocity of invalid/removed body (id={}), returning zero. This warning is throttled to once per 60s.",
+                    body != null ? Rapier3D.getID(body) : "null");
+            }
             cir.setReturnValue(dest.zero());
         }
     }
@@ -74,8 +86,13 @@ public abstract class RapierPhysicsPipelineMixin {
     private void fucksable$safeGetAngularVelocity(PhysicsPipelineBody body, Vector3d dest, CallbackInfoReturnable<Vector3d> cir) {
         if (!this.fucksable$isPanicGuardEnabled()) return;
         if (!this.fucksable$isBodyValid(body)) {
-            FuckSable.LOGGER.warn("Attempted to get angular velocity of invalid/removed body (id={}), returning zero",
-                body != null ? Rapier3D.getID(body) : "null");
+            long now = System.nanoTime();
+            long last = fucksable$lastAngularVelocityWarnTime;
+            if (now - last > FUCKSABLE$VELOCITY_WARN_INTERVAL_NS) {
+                fucksable$lastAngularVelocityWarnTime = now;
+                FuckSable.LOGGER.warn("Attempted to get angular velocity of invalid/removed body (id={}), returning zero. This warning is throttled to once per 60s.",
+                    body != null ? Rapier3D.getID(body) : "null");
+            }
             cir.setReturnValue(dest.zero());
         }
     }
